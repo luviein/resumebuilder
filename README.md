@@ -77,7 +77,7 @@ Text is extracted entirely client-side, then a heuristic engine looks for sectio
 
 ## Deployment
 
-Pushing to `main` automatically builds and deploys to GitHub Pages via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) — it installs dependencies, runs the test suite, builds with the correct base path for GitHub Pages' subdirectory hosting, and deploys the result. No manual build step required.
+Pushing to `main` automatically builds and deploys to GitHub Pages via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) — it installs dependencies, runs the test suite, builds with the correct base path for GitHub Pages' subdirectory hosting, then force-pushes the built output to a `gh-pages` branch (GitHub Pages is configured to serve from that branch). `main` only ever holds source — the build output is never committed there. No manual build step required, and `gh-pages`'s history doubles as a rollback point for every previously deployed build.
 
 ## License
 
