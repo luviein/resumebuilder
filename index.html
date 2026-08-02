@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#1a1a1a" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Offline Resume Builder</title>
-    <script type="module" crossorigin src="/resumebuilder/assets/index-D7nKFzuy.js"></script>
-    <link rel="stylesheet" crossorigin href="/resumebuilder/assets/index-ChMziIf8.css">
+    <script type="module" crossorigin src="/resumebuilder/assets/index-DfD8Mi08.js"></script>
+    <link rel="stylesheet" crossorigin href="/resumebuilder/assets/index-C87UpH9b.css">
   <link rel="manifest" href="/resumebuilder/manifest.webmanifest"></head>
   <body>
     <div id="app">
@@ -116,7 +116,10 @@
         <section id="editor-pane" class="editor-pane no-print">
           <div class="editor-wrap">
             <div id="line-numbers" class="line-numbers" aria-hidden="true"></div>
-            <textarea id="json-editor" spellcheck="false" wrap="off" aria-label="Resume JSON"></textarea>
+            <div class="editor-textarea-wrap">
+              <div id="error-line-highlight" class="error-line-highlight" aria-hidden="true"></div>
+              <textarea id="json-editor" spellcheck="false" wrap="off" aria-label="Resume JSON"></textarea>
+            </div>
           </div>
         </section>
 
