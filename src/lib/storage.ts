@@ -1,5 +1,4 @@
 const RESUME_TEXT_KEY = "resume-builder:resume-json";
-const TEMPLATE_ID_KEY = "resume-builder:template-id";
 
 export function loadSavedResumeText(): string | null {
   return localStorage.getItem(RESUME_TEXT_KEY);
@@ -7,14 +6,6 @@ export function loadSavedResumeText(): string | null {
 
 export function saveResumeText(text: string): void {
   localStorage.setItem(RESUME_TEXT_KEY, text);
-}
-
-export function loadSavedTemplateId(): string | null {
-  return localStorage.getItem(TEMPLATE_ID_KEY);
-}
-
-export function saveTemplateId(id: string): void {
-  localStorage.setItem(TEMPLATE_ID_KEY, id);
 }
 
 /** Triggers a browser download of the given text as a file. */

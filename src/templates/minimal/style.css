@@ -1,46 +1,50 @@
 /* Minimal template — single column, ATS-safe (no tables, no icon-only content). */
 
 .template-minimal {
-  font-family: Georgia, "Times New Roman", serif;
-  color: #1a1a1a;
-  line-height: 1.45;
+  font-family: var(--resume-font-body, Georgia, "Times New Roman", serif);
+  color: var(--resume-color-body, #1a1a1a);
+  line-height: var(--resume-line-height, 1.45);
   max-width: 48rem;
   margin: 0 auto;
 }
 
 .template-minimal .resume-header {
-  margin-bottom: 1.25rem;
-  border-bottom: 2px solid #1a1a1a;
-  padding-bottom: 0.75rem;
+  margin-bottom: calc(1.25rem * var(--resume-spacing-scale, 1));
+  border-bottom: 2px solid var(--resume-color-header, #1a1a1a);
+  padding-bottom: calc(0.75rem * var(--resume-spacing-scale, 1));
+  font-family: var(--resume-font-header, Georgia, "Times New Roman", serif);
+  color: var(--resume-color-header, #1a1a1a);
 }
 
 .template-minimal h1 {
-  font-size: 1.9rem;
+  font-size: calc(1.9rem * var(--resume-size-header, 1));
   margin: 0 0 0.15rem;
 }
 
 .template-minimal .label {
-  font-size: 1.05rem;
-  color: #444;
+  font-size: calc(1.05rem * var(--resume-size-header, 1));
+  color: color-mix(in srgb, var(--resume-color-header, #1a1a1a) 75%, white);
   margin: 0 0 0.4rem;
 }
 
 .template-minimal .contact {
-  font-size: 0.9rem;
-  color: #333;
+  font-size: calc(0.9rem * var(--resume-size-header, 1));
+  color: color-mix(in srgb, var(--resume-color-header, #1a1a1a) 65%, white);
   margin: 0.15rem 0;
 }
 
 .template-minimal .contact a {
-  color: #333;
+  color: inherit;
 }
 
 .template-minimal section {
-  margin-bottom: 1.1rem;
+  margin-bottom: calc(1.1rem * var(--resume-spacing-scale, 1));
 }
 
 .template-minimal h2 {
-  font-size: 1.05rem;
+  font-family: var(--resume-font-heading, Georgia, "Times New Roman", serif);
+  color: var(--resume-color-heading, #1a1a1a);
+  font-size: calc(1.05rem * var(--resume-size-heading, 1));
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-bottom: 1px solid #999;
@@ -49,7 +53,7 @@
 }
 
 .template-minimal .entry {
-  margin-bottom: 0.75rem;
+  margin-bottom: calc(0.75rem * var(--resume-spacing-scale, 1));
   break-inside: avoid;
 }
 
@@ -62,25 +66,25 @@
 }
 
 .template-minimal .entry-header h3 {
-  font-size: 1rem;
+  font-size: calc(1rem * var(--resume-size-body, 1));
   margin: 0;
 }
 
 .template-minimal .entry-dates {
-  font-size: 0.85rem;
-  color: #555;
+  font-size: calc(0.85rem * var(--resume-size-body, 1));
+  color: color-mix(in srgb, var(--resume-color-body, #1a1a1a) 70%, white);
   white-space: nowrap;
 }
 
 .template-minimal .entry-summary {
   margin: 0.2rem 0;
-  font-size: 0.92rem;
+  font-size: calc(0.92rem * var(--resume-size-body, 1));
 }
 
 .template-minimal .highlights {
   margin: 0.3rem 0 0;
   padding-left: 1.2rem;
-  font-size: 0.92rem;
+  font-size: calc(0.92rem * var(--resume-size-body, 1));
 }
 
 .template-minimal .highlights li {
@@ -91,7 +95,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  font-size: 0.92rem;
+  font-size: calc(0.92rem * var(--resume-size-body, 1));
 }
 
 .template-minimal .skills li {
@@ -101,15 +105,9 @@
 @media print {
   .template-minimal {
     max-width: none;
-    color: #000;
   }
 
   .template-minimal a {
-    color: #000;
     text-decoration: none;
-  }
-
-  .template-minimal .entry-dates {
-    color: #000;
   }
 }
