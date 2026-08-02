@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#1a1a1a" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offline Resume Builder</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar no-print">
+        <h1 class="app-title">Offline Resume Builder</h1>
+        <div class="topbar-controls">
+          <label class="template-select-label">
+            Template
+            <select id="template-select"></select>
+          </label>
+          <button id="load-json-btn" type="button">Load JSON</button>
+          <input id="load-json-input" type="file" accept="application/json,.json" hidden />
+          <button id="download-json-btn" type="button">Download JSON</button>
+          <button id="export-pdf-btn" type="button" class="primary">Export to PDF</button>
+        </div>
+      </header>
+
+      <nav class="tabs no-print" role="tablist">
+        <button id="tab-edit" class="tab-button is-active" role="tab" aria-selected="true">Edit JSON</button>
+        <button id="tab-preview" class="tab-button" role="tab" aria-selected="false">Preview</button>
+      </nav>
+
+      <div id="error-banner" class="error-banner no-print" hidden></div>
+
+      <main class="layout">
+        <section id="editor-pane" class="editor-pane no-print">
+          <div class="editor-wrap">
+            <div id="line-numbers" class="line-numbers" aria-hidden="true"></div>
+            <textarea id="json-editor" spellcheck="false" wrap="off" aria-label="Resume JSON"></textarea>
+          </div>
+        </section>
+
+        <section id="preview-pane" class="preview-pane">
+          <div id="preview"></div>
+        </section>
+      </main>
+
+      <footer class="footer no-print">
+        <p>Your data never leaves this browser — nothing is uploaded, no analytics, no server. Works fully offline.</p>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

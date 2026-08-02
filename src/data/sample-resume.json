@@ -1,0 +1,87 @@
+{
+  "basics": {
+    "name": "Jordan Rivera",
+    "label": "Software Engineer",
+    "email": "jordan.rivera@example.com",
+    "phone": "(555) 123-4567",
+    "url": "https://jordanrivera.dev",
+    "summary": "Backend-leaning full-stack engineer focused on reliable, well-tested systems. Enjoys turning ambiguous requirements into small, shippable pieces.",
+    "location": {
+      "city": "Portland",
+      "region": "OR",
+      "countryCode": "US"
+    },
+    "profiles": [
+      {
+        "network": "GitHub",
+        "username": "jrivera",
+        "url": "https://github.com/jrivera"
+      },
+      {
+        "network": "LinkedIn",
+        "username": "jordan-rivera",
+        "url": "https://linkedin.com/in/jordan-rivera"
+      }
+    ]
+  },
+  "work": [
+    {
+      "name": "Northwind Systems",
+      "position": "Senior Software Engineer",
+      "url": "https://northwind.example.com",
+      "startDate": "2022-03",
+      "endDate": "",
+      "summary": "Own the payments processing service on a team of five.",
+      "highlights": [
+        "Redesigned the retry pipeline, cutting failed-payment support tickets by 40%",
+        "Led migration from a monolith to two focused services with zero downtime",
+        "Mentored two junior engineers through their first on-call rotations"
+      ]
+    },
+    {
+      "name": "Bluefin Analytics",
+      "position": "Software Engineer",
+      "url": "https://bluefin.example.com",
+      "startDate": "2019-06",
+      "endDate": "2022-02",
+      "summary": "Built internal tooling for the data science team.",
+      "highlights": [
+        "Shipped a self-serve dashboard that replaced ~10 hrs/week of manual reporting",
+        "Introduced integration tests, raising CI confidence enough to enable same-day deploys"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "University of Oregon",
+      "area": "Computer Science",
+      "studyType": "B.S.",
+      "startDate": "2015-09",
+      "endDate": "2019-06"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Backend",
+      "keywords": ["TypeScript", "Node.js", "PostgreSQL", "Redis"]
+    },
+    {
+      "name": "Frontend",
+      "keywords": ["React", "CSS", "Accessibility"]
+    },
+    {
+      "name": "Practices",
+      "keywords": ["Testing", "CI/CD", "Code Review"]
+    }
+  ],
+  "projects": [
+    {
+      "name": "offline-resume",
+      "description": "This resume builder — a privacy-first, offline, JSON-driven resume tool.",
+      "url": "https://github.com/jrivera/offline-resume",
+      "highlights": [
+        "Renders ATS-friendly PDFs entirely client-side with no server or tracking"
+      ]
+    }
+  ]
+}
