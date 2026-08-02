@@ -35,5 +35,26 @@ export function validateResumeJson(raw: string): ValidationResult {
     }
   }
 
+  normalizeLegacyWorkFields(obj);
+
   return { ok: true, data: obj as unknown as ResumeData };
+}
+
+/**
+ * ResumeWork uses companyName/positionName, not the standard JSON Resume field names
+ * (name/position) — accept the standard names too so a JSON Resume file loads correctly
+ * instead of silently rendering with blank company/position on every work entry.
+ */
+function normalizeLegacyWorkFields(obj: Record<string, unknown>): void {
+  if (!Array.isArray(obj.work)) return;
+  for (const entry of obj.work) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const work = entry as Record<string, unknown>;
+    if (work.companyName === undefined && typeof work.name === "string") {
+      work.companyName = work.name;
+    }
+    if (work.positionName === undefined && typeof work.position === "string") {
+      work.positionName = work.position;
+    }
+  }
 }

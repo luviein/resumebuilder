@@ -45,4 +45,35 @@ describe("validateResumeJson", () => {
       expect(result.error).toMatch(/work/);
     }
   });
+
+  it("maps standard JSON Resume field names (name/position) onto companyName/positionName", () => {
+    // A plain JSON Resume file uses the standard schema's field names, not this app's — without
+    // this mapping it would pass validation but render every work entry with a blank
+    // company/position, silently, since the template only reads companyName/positionName.
+    const result = validateResumeJson(
+      JSON.stringify({
+        basics: { name: "Ada Lovelace" },
+        work: [{ name: "Acme Corp", position: "Engineer" }],
+      }),
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.work![0].companyName).toBe("Acme Corp");
+      expect(result.data.work![0].positionName).toBe("Engineer");
+    }
+  });
+
+  it("doesn't override companyName/positionName when both the legacy and new fields are present", () => {
+    const result = validateResumeJson(
+      JSON.stringify({
+        basics: { name: "Ada Lovelace" },
+        work: [{ name: "Legacy Name", companyName: "Correct Name", position: "Legacy Title", positionName: "Correct Title" }],
+      }),
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.work![0].companyName).toBe("Correct Name");
+      expect(result.data.work![0].positionName).toBe("Correct Title");
+    }
+  });
 });
