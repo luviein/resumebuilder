@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/resumebuilder/favicon.svg" />
+    <meta name="theme-color" content="#1a1a1a" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offline Resume Builder</title>
+    <script type="module" crossorigin src="/resumebuilder/assets/index-D7nKFzuy.js"></script>
+    <link rel="stylesheet" crossorigin href="/resumebuilder/assets/index-ChMziIf8.css">
+  <link rel="manifest" href="/resumebuilder/manifest.webmanifest"></head>
+  <body>
+    <div id="app">
+      <header class="topbar no-print">
+        <h1 class="app-title">Offline Resume Builder</h1>
+        <div class="topbar-controls">
+          <button id="customize-btn" type="button">Customize</button>
+          <button id="load-json-btn" type="button" title="Import a PDF, DOCX, or JSON resume. PDF/DOCX are auto-parsed and may need review — JSON loads exactly as-is.">Import Resume</button>
+          <input id="load-json-input" type="file" accept=".json,application/json,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
+          <button id="download-json-btn" type="button">Download JSON</button>
+          <button id="export-pdf-btn" type="button" class="primary">Export to PDF</button>
+        </div>
+      </header>
+
+      <nav class="tabs no-print" role="tablist">
+        <button id="tab-edit" class="tab-button is-active" role="tab" aria-selected="true">Edit JSON</button>
+        <button id="tab-preview" class="tab-button" role="tab" aria-selected="false">Preview</button>
+      </nav>
+
+      <div id="info-banner" class="info-banner no-print" hidden></div>
+      <div id="error-banner" class="error-banner no-print" hidden></div>
+
+      <dialog id="style-dialog" class="style-dialog no-print">
+        <div id="style-dialog-header" class="style-dialog-header">
+          <h2>Customize</h2>
+        </div>
+        <form method="dialog" class="style-form">
+          <fieldset>
+            <legend>Layout</legend>
+            <label class="style-row">
+              <span>Margin</span>
+              <input id="style-margin" type="range" min="0.25" max="1.5" step="0.05" />
+              <output id="style-margin-value" for="style-margin"></output>
+            </label>
+            <label class="style-row">
+              <span>Spacing</span>
+              <input id="style-spacing" type="range" min="0.5" max="2" step="0.05" />
+              <output id="style-spacing-value" for="style-spacing"></output>
+            </label>
+            <label class="style-row">
+              <span>Line height</span>
+              <input id="style-line-height" type="range" min="1" max="2" step="0.05" />
+              <output id="style-line-height-value" for="style-line-height"></output>
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Header (name, title, contact)</legend>
+            <label class="style-row">
+              <span>Font</span>
+              <select id="style-header-font"></select>
+            </label>
+            <label class="style-row">
+              <span>Size</span>
+              <input id="style-header-size" type="range" min="0.7" max="1.5" step="0.05" />
+              <output id="style-header-size-value" for="style-header-size"></output>
+            </label>
+            <label class="style-row">
+              <span>Color</span>
+              <input id="style-header-color" type="color" />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Section headings</legend>
+            <label class="style-row">
+              <span>Font</span>
+              <select id="style-heading-font"></select>
+            </label>
+            <label class="style-row">
+              <span>Size</span>
+              <input id="style-heading-size" type="range" min="0.7" max="1.5" step="0.05" />
+              <output id="style-heading-size-value" for="style-heading-size"></output>
+            </label>
+            <label class="style-row">
+              <span>Color</span>
+              <input id="style-heading-color" type="color" />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Body text</legend>
+            <label class="style-row">
+              <span>Font</span>
+              <select id="style-body-font"></select>
+            </label>
+            <label class="style-row">
+              <span>Size</span>
+              <input id="style-body-size" type="range" min="0.7" max="1.5" step="0.05" />
+              <output id="style-body-size-value" for="style-body-size"></output>
+            </label>
+            <label class="style-row">
+              <span>Color</span>
+              <input id="style-body-color" type="color" />
+            </label>
+          </fieldset>
+
+          <div class="style-dialog-actions">
+            <button id="style-reset-btn" type="button">Reset to defaults</button>
+            <button type="submit" class="primary">Done</button>
+          </div>
+        </form>
+      </dialog>
+
+      <main class="layout">
+        <section id="editor-pane" class="editor-pane no-print">
+          <div class="editor-wrap">
+            <div id="line-numbers" class="line-numbers" aria-hidden="true"></div>
+            <textarea id="json-editor" spellcheck="false" wrap="off" aria-label="Resume JSON"></textarea>
+          </div>
+        </section>
+
+        <section id="preview-pane" class="preview-pane">
+          <div id="preview"></div>
+        </section>
+      </main>
+
+      <footer class="footer no-print">
+        <p>Your data never leaves this browser — nothing is uploaded, no analytics, no server. Works fully offline.</p>
+      </footer>
+    </div>
+  </body>
+</html>
