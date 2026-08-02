@@ -23,7 +23,7 @@ body {
 #app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .topbar {
@@ -157,10 +157,28 @@ button:disabled {
   overflow: auto;
 }
 
-#json-editor {
+.editor-textarea-wrap {
+  position: relative;
   flex: 1;
   height: 100%;
   min-height: 60vh;
+}
+
+.error-line-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: none;
+  background: rgba(239, 68, 68, 0.22);
+  border-top: 1px solid rgba(239, 68, 68, 0.6);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.6);
+  pointer-events: none;
+}
+
+#json-editor {
+  position: absolute;
+  inset: 0;
   border: none;
   resize: none;
   padding: 1rem;

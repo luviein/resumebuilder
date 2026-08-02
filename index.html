@@ -114,7 +114,10 @@
         <section id="editor-pane" class="editor-pane no-print">
           <div class="editor-wrap">
             <div id="line-numbers" class="line-numbers" aria-hidden="true"></div>
-            <textarea id="json-editor" spellcheck="false" wrap="off" aria-label="Resume JSON"></textarea>
+            <div class="editor-textarea-wrap">
+              <div id="error-line-highlight" class="error-line-highlight" aria-hidden="true"></div>
+              <textarea id="json-editor" spellcheck="false" wrap="off" aria-label="Resume JSON"></textarea>
+            </div>
           </div>
         </section>
 
