@@ -16,8 +16,8 @@
             Template
             <select id="template-select"></select>
           </label>
-          <button id="load-json-btn" type="button">Load JSON</button>
-          <input id="load-json-input" type="file" accept="application/json,.json" hidden />
+          <button id="load-json-btn" type="button">Import Resume</button>
+          <input id="load-json-input" type="file" accept=".json,application/json,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
           <button id="download-json-btn" type="button">Download JSON</button>
           <button id="export-pdf-btn" type="button" class="primary">Export to PDF</button>
         </div>
@@ -28,6 +28,7 @@
         <button id="tab-preview" class="tab-button" role="tab" aria-selected="false">Preview</button>
       </nav>
 
+      <div id="info-banner" class="info-banner no-print" hidden></div>
       <div id="error-banner" class="error-banner no-print" hidden></div>
 
       <main class="layout">

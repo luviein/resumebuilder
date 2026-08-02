@@ -16,6 +16,7 @@ const editor = document.getElementById("json-editor") as HTMLTextAreaElement;
 const lineNumbers = document.getElementById("line-numbers") as HTMLDivElement;
 const preview = document.getElementById("preview") as HTMLDivElement;
 const errorBanner = document.getElementById("error-banner") as HTMLDivElement;
+const infoBanner = document.getElementById("info-banner") as HTMLDivElement;
 const templateSelect = document.getElementById("template-select") as HTMLSelectElement;
 const loadJsonBtn = document.getElementById("load-json-btn") as HTMLButtonElement;
 const loadJsonInput = document.getElementById("load-json-input") as HTMLInputElement;
@@ -42,6 +43,15 @@ function showError(message: string | null): void {
     errorBanner.hidden = false;
   } else {
     errorBanner.hidden = true;
+  }
+}
+
+function showInfo(message: string | null): void {
+  if (message) {
+    infoBanner.textContent = message;
+    infoBanner.hidden = false;
+  } else {
+    infoBanner.hidden = true;
   }
 }
 
@@ -87,6 +97,7 @@ function render(): void {
 
 let debounceHandle: number | undefined;
 editor.addEventListener("input", () => {
+  showInfo(null);
   renderLineNumbers(currentErrorLine);
   window.clearTimeout(debounceHandle);
   debounceHandle = window.setTimeout(render, 300);
@@ -108,12 +119,49 @@ templateSelect.addEventListener("change", () => {
 
 loadJsonBtn.addEventListener("click", () => loadJsonInput.click());
 
+const IMPORT_BUTTON_LABEL = "Import Resume";
+
 loadJsonInput.addEventListener("change", async () => {
   const file = loadJsonInput.files?.[0];
-  if (!file) return;
-  editor.value = await readFileAsText(file);
   loadJsonInput.value = "";
-  render();
+  if (!file) return;
+
+  showError(null);
+  showInfo(null);
+
+  const extension = file.name.split(".").pop()?.toLowerCase();
+
+  if (extension === "json") {
+    editor.value = await readFileAsText(file);
+    render();
+    return;
+  }
+
+  if (extension !== "pdf" && extension !== "docx") {
+    showError(`Unsupported file type ".${extension ?? ""}". Use .json, .pdf, or .docx.`);
+    return;
+  }
+
+  loadJsonBtn.disabled = true;
+  loadJsonBtn.textContent = "Importing…";
+  try {
+    const text =
+      extension === "pdf"
+        ? await (await import("./lib/importers/pdf")).extractPdfText(file)
+        : await (await import("./lib/importers/docx")).extractDocxText(file);
+    // eslint-disable-next-line no-console
+    console.log("[Import] Raw extracted text (before heuristic parsing):\n" + text);
+    const { parseResumeText } = await import("./lib/importers/heuristics");
+    const data = parseResumeText(text);
+    editor.value = JSON.stringify(data, null, 2);
+    render();
+    showInfo(`Imported from "${file.name}" — review dates and sections below, they may need correcting.`);
+  } catch (err) {
+    showError(err instanceof Error ? err.message : "Couldn't read that file. Try Load JSON with a .json file instead.");
+  } finally {
+    loadJsonBtn.disabled = false;
+    loadJsonBtn.textContent = IMPORT_BUTTON_LABEL;
+  }
 });
 
 downloadJsonBtn.addEventListener("click", () => {

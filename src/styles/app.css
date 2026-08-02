@@ -74,6 +74,11 @@ button.primary {
   border-color: var(--accent);
 }
 
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .tabs {
   display: none;
   border-bottom: 1px solid var(--border);
@@ -101,6 +106,14 @@ button.primary {
   padding: 0.6rem 1rem;
   font-size: 0.9rem;
   cursor: pointer;
+}
+
+.info-banner {
+  background: #eff6ff;
+  color: #1e40af;
+  border-bottom: 1px solid #bfdbfe;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
 }
 
 .layout {

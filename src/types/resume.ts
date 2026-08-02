@@ -1,4 +1,6 @@
-// Subset of the JSON Resume schema (https://jsonresume.org/schema/) we render.
+// Based on the JSON Resume schema (https://jsonresume.org/schema/), with work entry fields
+// renamed (name/position -> companyName/positionName) for clarity — this is a deliberate
+// departure from the standard's field names, not a JSON-Resume-compatible file.
 // Extra fields on a real resume.json are simply ignored, not rejected.
 
 export interface ResumeLocation {
@@ -27,8 +29,8 @@ export interface ResumeBasics {
 }
 
 export interface ResumeWork {
-  name: string;
-  position?: string;
+  companyName: string;
+  positionName?: string;
   url?: string;
   startDate?: string;
   endDate?: string;

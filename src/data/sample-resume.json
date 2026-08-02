@@ -26,8 +26,8 @@
   },
   "work": [
     {
-      "name": "Northwind Systems",
-      "position": "Senior Software Engineer",
+      "companyName": "Northwind Systems",
+      "positionName": "Senior Software Engineer",
       "url": "https://northwind.example.com",
       "startDate": "2022-03",
       "endDate": "",
@@ -39,8 +39,8 @@
       ]
     },
     {
-      "name": "Bluefin Analytics",
-      "position": "Software Engineer",
+      "companyName": "Bluefin Analytics",
+      "positionName": "Software Engineer",
       "url": "https://bluefin.example.com",
       "startDate": "2019-06",
       "endDate": "2022-02",

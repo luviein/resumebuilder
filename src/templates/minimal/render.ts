@@ -16,9 +16,15 @@ function formatDate(value: string | undefined): string {
   return monthName ? `${monthName} ${year}` : escapeHtml(value);
 }
 
+/**
+ * `endDate: undefined` means "no end field at all" (e.g. a status note like "Admitted for Aug
+ * 2026", not a range) — show the start value alone. `endDate: ""` means "ongoing" — show "– Present".
+ * `endDate` with a value shows a normal range.
+ */
 function dateRange(startDate: string | undefined, endDate: string | undefined): string {
   const start = formatDate(startDate);
   if (!start) return "";
+  if (endDate === undefined) return start;
   const end = endDate ? formatDate(endDate) : "Present";
   return `${start} – ${end}`;
 }
@@ -33,7 +39,7 @@ function renderWorkEntry(entry: ResumeWork): string {
   return `
     <article class="entry">
       <div class="entry-header">
-        <h3>${escapeHtml(entry.position)}${entry.position && entry.name ? ", " : ""}${escapeHtml(entry.name)}</h3>
+        <h3>${escapeHtml(entry.positionName)}${entry.positionName && entry.companyName ? ", " : ""}${escapeHtml(entry.companyName)}</h3>
         <span class="entry-dates">${dateRange(entry.startDate, entry.endDate)}</span>
       </div>
       ${entry.summary ? `<p class="entry-summary">${escapeHtml(entry.summary)}</p>` : ""}
