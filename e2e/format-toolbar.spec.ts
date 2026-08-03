@@ -66,3 +66,20 @@ test("Bold and Italic combine on the same selection", async ({ page }) => {
 
   await expect(highlight.locator("strong em, em strong")).toHaveCount(1);
 });
+
+test("the selection stays highlighted after a format click, so a second format can be applied without re-selecting", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const highlight = page.locator("#preview .highlights li").first();
+  await highlight.dblclick();
+  await page.locator('#format-toolbar button[data-format="bold"]').click();
+  await expect(highlight.locator("strong")).toBeVisible();
+
+  // No re-selection here — the toolbar should still be showing over the same (now-bold) text.
+  await expect(page.locator("#format-toolbar")).toBeVisible();
+  await page.locator('#format-toolbar button[data-format="italic"]').click();
+
+  await expect(highlight.locator("strong em, em strong")).toHaveCount(1);
+});

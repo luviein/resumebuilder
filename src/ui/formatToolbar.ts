@@ -26,7 +26,10 @@ function getEditablePathElement(node: Node | null): HTMLElement | null {
 // before its own render() runs, so it never re-triggers this way and doesn't need suppressing.
 let suppressFocusoutCommit = false;
 
-/** Writes `markup` back into the resume JSON at `target`'s field and re-renders. */
+/** Writes `markup` back into the resume JSON at `target`'s field and re-renders. Does not touch
+ * the toolbar's visibility or the selection — callers decide what should happen to those, since
+ * that differs between a toolbar-button commit (selection should survive so another format can
+ * be applied without re-selecting) and a focusout commit (nothing left to keep selected). */
 function commitFieldMarkup(target: HTMLElement, markup: string): void {
   const path = target.getAttribute("data-path");
   if (!path) return;
@@ -37,13 +40,13 @@ function commitFieldMarkup(target: HTMLElement, markup: string): void {
   suppressFocusoutCommit = true;
   render();
   suppressFocusoutCommit = false;
-  formatToolbar.hidden = true;
 }
 
 /** Writes an edited field's current markup back into the resume JSON and re-renders — same
  * write-through-Source model as the Form editor, so this never becomes a second source of truth. */
 function commitEditableChange(target: HTMLElement): void {
   commitFieldMarkup(target, htmlToMarkup(target));
+  formatToolbar.hidden = true;
 }
 
 /** Offset (in `root`'s flattened plain text) of the point `node`+`offset` in the live DOM —
@@ -54,6 +57,38 @@ function plainTextOffset(root: HTMLElement, node: Node, offset: number): number 
   range.selectNodeContents(root);
   range.setEnd(node, offset);
   return range.toString().length;
+}
+
+/** The inverse of plainTextOffset: finds the (text node, local offset) pairs [start, end) apart
+ * within `root`'s flattened plain text, and returns a Range spanning them. */
+function rangeFromPlainTextOffsets(root: HTMLElement, start: number, end: number): Range | null {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let pos = 0;
+  let startNode: Text | null = null;
+  let startOffset = 0;
+  let endNode: Text | null = null;
+  let endOffset = 0;
+
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node as Text;
+    const len = text.length;
+    if (!startNode && pos + len >= start) {
+      startNode = text;
+      startOffset = start - pos;
+    }
+    if (!endNode && pos + len >= end) {
+      endNode = text;
+      endOffset = end - pos;
+      break;
+    }
+    pos += len;
+  }
+  if (!startNode || !endNode) return null;
+
+  const range = document.createRange();
+  range.setStart(startNode, startOffset);
+  range.setEnd(endNode, endOffset);
+  return range;
 }
 
 /** Splits `runs` so that every `offsets` position falls exactly on a run boundary, dropping any
@@ -175,11 +210,25 @@ export function initFormatToolbar(): void {
     const target = getEditablePathElement(range.commonAncestorContainer);
     if (!target || !range.toString()) return;
 
+    const path = target.getAttribute("data-path");
     const start = plainTextOffset(target, range.startContainer, range.startOffset);
     const end = plainTextOffset(target, range.endContainer, range.endOffset);
     const action = button.dataset.format as InlineFormat | "reset";
 
     commitFieldMarkup(target, applyFormatToSelection(target, start, end, action));
+
+    // render() just replaced #preview's contents, so `target` is now a detached, stale element —
+    // re-find the field by its (still-valid) data-path and re-select the same [start, end) plain-
+    // text range in the fresh DOM, so the toolbar stays up and another format can be applied (e.g.
+    // Bold then Italic) without the user having to re-select the text.
+    const newTarget = path ? preview.querySelector<HTMLElement>(`[data-path="${path}"]`) : null;
+    const newRange = newTarget ? rangeFromPlainTextOffsets(newTarget, start, end) : null;
+    if (newRange) {
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(newRange);
+    }
+    updateFormatToolbar();
   });
 
   // Prose fields hold a single-line string in the JSON, so Enter shouldn't insert a paragraph break.
