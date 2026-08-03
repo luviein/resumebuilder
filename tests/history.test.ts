@@ -40,8 +40,20 @@ describe("appendCheckpoint", () => {
       text: `v${i}`,
       savedAt: `t${i}`,
     }));
-    const result = appendCheckpoint(history, "v5", "t5", 5);
+    const result = appendCheckpoint(history, "v5", "t5", undefined, 5);
     expect(result).toHaveLength(5);
     expect(result.map((e) => e.text)).toEqual(["v1", "v2", "v3", "v4", "v5"]);
+  });
+
+  it("stores the label when one is given", () => {
+    const result = appendCheckpoint([], "v1", "2026-01-01T00:00:00.000Z", "Before layout change");
+    expect(result).toEqual([{ text: "v1", savedAt: "2026-01-01T00:00:00.000Z", label: "Before layout change" }]);
+  });
+
+  it("always creates a new entry when a label is given, even if the content matches the last save", () => {
+    const history: HistoryEntry[] = [{ text: "v1", savedAt: "2026-01-01T00:00:00.000Z" }];
+    const result = appendCheckpoint(history, "v1", "2026-01-01T00:01:00.000Z", "Milestone");
+    expect(result).toHaveLength(2);
+    expect(result[1]).toEqual({ text: "v1", savedAt: "2026-01-01T00:01:00.000Z", label: "Milestone" });
   });
 });

@@ -59,6 +59,7 @@ const styleDialog = document.getElementById("style-dialog") as HTMLDialogElement
 const styleDialogHeader = document.getElementById("style-dialog-header") as HTMLDivElement;
 
 const versionSelect = document.getElementById("version-select") as HTMLSelectElement;
+const versionNameInput = document.getElementById("version-name-input") as HTMLInputElement;
 const saveVersionBtn = document.getElementById("save-version-btn") as HTMLButtonElement;
 const historyDialog = document.getElementById("history-dialog") as HTMLDialogElement;
 const historyDialogHeader = document.getElementById("history-dialog-header") as HTMLDivElement;
@@ -181,7 +182,8 @@ makeDialogDraggable(styleDialog, styleDialogHeader);
 makeDialogDraggable(historyDialog, historyDialogHeader);
 
 function formatHistoryLabel(entry: HistoryEntry): string {
-  return new Date(entry.savedAt).toLocaleString();
+  const timestamp = new Date(entry.savedAt).toLocaleString();
+  return entry.label ? `${entry.label} (${timestamp})` : timestamp;
 }
 
 /** Rebuilds the topbar version dropdown from saved history — newest first, indices into the
@@ -245,10 +247,18 @@ historyRestoreBtn.addEventListener("click", () => {
   versionSelect.value = "";
 });
 
-saveVersionBtn.addEventListener("click", () => {
-  const saved = checkpoint(editor.value);
+function saveVersion(): void {
+  const label = versionNameInput.value.trim();
+  const saved = checkpoint(editor.value, label || undefined);
+  versionNameInput.value = "";
   refreshVersionSelect();
   showInfo(saved ? "Version saved." : "Nothing's changed since your last save.");
+}
+
+saveVersionBtn.addEventListener("click", saveVersion);
+
+versionNameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") saveVersion();
 });
 
 refreshVersionSelect();
