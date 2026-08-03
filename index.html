@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#1a1a1a" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Offline Resume Builder</title>
-    <script type="module" crossorigin src="/resumebuilder/assets/index-Dj_rocVz.js"></script>
-    <link rel="stylesheet" crossorigin href="/resumebuilder/assets/index-DmITqpK6.css">
+    <script type="module" crossorigin src="/resumebuilder/assets/index-BSTYxngM.js"></script>
+    <link rel="stylesheet" crossorigin href="/resumebuilder/assets/index-AtYE4UcO.css">
   <link rel="manifest" href="/resumebuilder/manifest.webmanifest"></head>
   <body>
     <div id="app">
@@ -16,6 +16,7 @@
         <div class="topbar-controls">
           <select id="template-select" aria-label="Template"></select>
           <button id="customize-btn" type="button">Customize</button>
+          <button id="history-btn" type="button" title="View and restore previously saved versions of this resume">History</button>
           <button id="load-json-btn" type="button" title="Import a PDF, DOCX, or JSON resume. PDF/DOCX are auto-parsed and may need review — JSON loads exactly as-is.">Import Resume</button>
           <input id="load-json-input" type="file" accept=".json,application/json,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
           <button id="download-json-btn" type="button">Download JSON</button>
@@ -112,6 +113,23 @@
           <div class="style-dialog-actions">
             <button id="style-reset-btn" type="button">Reset to defaults</button>
             <button id="style-autofit-btn" type="button" title="Shrinks spacing, line height, and font size until the resume fits one page">Auto-fit to page</button>
+            <button type="submit" class="primary">Done</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="history-dialog" class="history-dialog no-print">
+        <div id="history-dialog-header" class="style-dialog-header">
+          <h2>History</h2>
+        </div>
+        <form method="dialog" class="history-form">
+          <label class="style-row">
+            <span>Version</span>
+            <select id="history-select"></select>
+          </label>
+          <div id="history-diff" class="history-diff"></div>
+          <div class="style-dialog-actions">
+            <button id="history-restore-btn" type="button">Restore this version</button>
             <button type="submit" class="primary">Done</button>
           </div>
         </form>
