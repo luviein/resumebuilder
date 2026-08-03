@@ -100,12 +100,52 @@ button:disabled {
   cursor: pointer;
 }
 
+/* Floating, not in normal document flow — an in-flow banner would push everything below it
+   (including the Form editor's buttons) down when it appears, so a second real click at the same
+   screen position could land on a different, now-shifted button (e.g. hitting a neighboring
+   "Move up" right after a "Move down" boundary message). */
 .info-banner {
+  position: fixed;
+  top: 4.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: min(32rem, 90vw);
   background: #eff6ff;
   color: #1e40af;
-  border-bottom: 1px solid #bfdbfe;
-  padding: 0.6rem 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.6rem 0.6rem 1rem;
   font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* `display: flex` above is an author rule, which overrides the browser's default
+   `[hidden] { display: none }` UA style — without this, toggling the `hidden` attribute never
+   actually hides the banner even though it correctly updates the DOM. */
+.info-banner[hidden] {
+  display: none;
+}
+
+.info-banner-close {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.25rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.info-banner-close:hover {
+  background: rgba(30, 64, 175, 0.12);
 }
 
 .layout {
@@ -120,11 +160,161 @@ button:disabled {
 .editor-pane {
   background: var(--surface);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-tabs {
+  display: flex;
+  flex: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.editor-tab-button {
+  flex: 1;
+  border: none;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.editor-tab-button.is-active {
+  border-bottom-color: var(--accent);
+  font-weight: 600;
 }
 
 .editor-wrap {
   display: flex;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-wrap[hidden] {
+  display: none;
+}
+
+.form-editor {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-editor[hidden] {
+  display: none;
+}
+
+.form-fieldset {
+  border: 2px solid var(--border);
+  border-radius: 0.4rem;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-fieldset legend {
+  padding: 0 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.form-field span {
+  color: var(--muted);
+}
+
+.form-field input,
+.form-field textarea,
+.form-add-section select {
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.3rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.form-field-multiline textarea {
+  resize: vertical;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+.form-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form-item {
+  border: 1px dashed var(--border);
+  border-radius: 0.4rem;
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-item-inline {
+  flex-direction: row;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.form-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.form-just-moved {
+  animation: form-just-moved-flash 0.9s ease;
+}
+
+@keyframes form-just-moved-flash {
+  0% {
+    background-color: rgba(37, 99, 235, 0.28);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.form-sections-heading {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.form-add-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.form-add-section input[type="text"] {
+  flex: 1;
+  min-width: 8rem;
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.3rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
 }
 
 .line-numbers {
@@ -150,11 +340,39 @@ button:disabled {
   font-weight: 700;
 }
 
-/* Resume preview is always rendered as if on white paper, independent of app theme. */
+/* The "desk" — a scrollable neutral surface the fixed-size page sits on. Distinct from
+   the page itself so the page's true A4 shape is visually obvious at any pane width. */
 .preview-pane {
+  background: #d4d4d8;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-block: 1.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .preview-pane {
+    background: #111113;
+  }
+}
+
+/* Sized in JS to exactly match .page's scaled visual footprint, so the scrollable "desk"
+   doesn't reserve dead space below/around a page that's been shrunk to fit. */
+.page-scale-wrapper {
+  flex: none;
+}
+
+/* Fixed true-A4-proportioned page, independent of the pane's actual width. Scaled down
+   (never up) via a JS-computed transform in main.ts when the pane is narrower than
+   the page itself, so the whole page stays visible without horizontal scrolling. */
+.page {
+  width: 210mm;
+  min-height: 297mm;
   background: #ffffff;
   color: #1a1a1a;
-  overflow: auto;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform-origin: top left;
 }
 
 .editor-textarea-wrap {
@@ -195,7 +413,7 @@ button:disabled {
   outline: none;
 }
 
-.preview-pane {
+.page {
   padding: var(--resume-margin, 0.75in);
 }
 
@@ -213,6 +431,7 @@ button:disabled {
    cover the preview at all until/unless the user drags it. */
 .style-dialog {
   position: fixed;
+  z-index: 15;
   top: 4.5rem;
   left: 1.5rem;
   margin: 0;
@@ -302,6 +521,7 @@ button:disabled {
 
 .style-dialog-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.5rem;
 }
@@ -334,6 +554,49 @@ button:disabled {
   }
 }
 
+/* Editable prose fields in the preview (summary, highlights, text sections) — a subtle hover/focus
+   cue so it's discoverable that this text can be selected and formatted, without a jarring
+   default contenteditable outline. */
+[contenteditable="true"] {
+  cursor: text;
+  border-radius: 0.15rem;
+  transition: background-color 0.15s ease;
+}
+
+[contenteditable="true"]:hover {
+  background-color: rgba(37, 99, 235, 0.06);
+}
+
+[contenteditable="true"]:focus {
+  outline: 2px solid rgba(37, 99, 235, 0.45);
+  outline-offset: 2px;
+  background-color: rgba(37, 99, 235, 0.06);
+}
+
+/* Positioned in JS above the current text selection. Lives outside .page (which has a CSS
+   transform for the A4 scale-to-fit) so position:fixed stays relative to the true viewport,
+   not the transformed page box. */
+.format-toolbar {
+  position: fixed;
+  z-index: 20;
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.format-toolbar[hidden] {
+  display: none;
+}
+
+.format-toolbar button {
+  min-width: 2rem;
+  padding: 0.3rem 0.5rem;
+}
+
 /* Neutralizes the browser's own print margin so our --resume-margin isn't added on top of it. */
 @page {
   margin: 0;
@@ -353,10 +616,28 @@ button:disabled {
   }
 
   .preview-pane {
+    padding: 0 !important;
+  }
+
+  .page-scale-wrapper {
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .page {
+    width: auto !important;
+    min-height: 0 !important;
     padding: var(--resume-margin, 0.75in) !important;
+    box-shadow: none !important;
+    transform: none !important;
   }
 
   body {
     background: #fff;
+  }
+
+  [contenteditable] {
+    outline: none !important;
+    background: none !important;
   }
 }

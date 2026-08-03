@@ -1,10 +1,9 @@
 import type {
   ResumeData,
   ResumeBasics,
-  ResumeWork,
-  ResumeEducation,
-  ResumeSkill,
-  ResumeProject,
+  ResumeEntryItem,
+  ResumeSkillItem,
+  ResumeSection,
   ResumeProfile,
 } from "../../types/resume";
 
@@ -22,14 +21,22 @@ const DATE_RANGE_RE = new RegExp(
   "i",
 );
 
-type SectionKey = "summary" | "work" | "education" | "skills" | "projects";
+type KnownSectionKey = "summary" | "work" | "education" | "skills" | "projects";
 
-const SECTION_KEYWORDS: Record<SectionKey, string[]> = {
+const SECTION_KEYWORDS: Record<KnownSectionKey, string[]> = {
   summary: ["summary", "objective", "profile", "about"],
   work: ["experience", "work experience", "employment", "work history", "professional experience"],
   education: ["education"],
   skills: ["skills", "technical skills", "core competencies"],
   projects: ["projects", "personal projects"],
+};
+
+const SECTION_TITLES: Record<KnownSectionKey, string> = {
+  summary: "Summary",
+  work: "Experience",
+  education: "Education",
+  skills: "Skills",
+  projects: "Projects",
 };
 
 /** Thrown when the extracted text is too sparse to be worth heuristically parsing (e.g. a scanned/image-only PDF). */
@@ -42,11 +49,11 @@ export class EmptyResumeTextError extends Error {}
  * ("EXPERIENCES") — both are tolerated here. Whatever follows the matched keyword on the same
  * line is returned as `rest` so it isn't silently dropped.
  */
-function matchSectionHeader(line: string): { key: SectionKey; rest: string } | null {
+function matchSectionHeader(line: string): { key: KnownSectionKey; rest: string } | null {
   const trimmed = line.trim();
   if (trimmed.length === 0) return null;
 
-  for (const key of Object.keys(SECTION_KEYWORDS) as SectionKey[]) {
+  for (const key of Object.keys(SECTION_KEYWORDS) as KnownSectionKey[]) {
     for (const keyword of SECTION_KEYWORDS[key]) {
       const re = new RegExp(`^${keyword}s?\\b:?\\s*`, "i");
       const match = re.exec(trimmed);
@@ -62,26 +69,69 @@ function isContactLine(line: string): boolean {
   return EMAIL_RE.test(line) || PHONE_RE.test(line) || URL_RE.test(line);
 }
 
-function splitIntoSections(lines: string[]): { header: string[]; sections: Partial<Record<SectionKey, string[]>> } {
-  const sections: Partial<Record<SectionKey, string[]>> = {};
-  let currentKey: SectionKey | null = null;
+/**
+ * Catches section headers this parser doesn't have a built-in vocabulary for (Certifications,
+ * Awards, Volunteer, Publications, ...) so they become their own real section instead of being
+ * silently absorbed into whatever section came before. Deliberately conservative — ALL CAPS only
+ * (not Title Case) — because Title Case alone is indistinguishable from a bare entry title line
+ * (a company/institution name on its own line), which would wrongly split entries into their own
+ * sections. Resume section headers are overwhelmingly written in ALL CAPS in practice, so this
+ * catches the real cases without much false-positive risk.
+ */
+function looksLikeGenericHeading(line: string): boolean {
+  const trimmed = line.trim();
+  if (trimmed.length < 4 || trimmed.length > 40) return false;
+  if (isContactLine(trimmed)) return false;
+  if (BULLET_RE.test(trimmed)) return false;
+  if (DATE_RANGE_RE.test(trimmed)) return false;
+  if (/[.!?,]$/.test(trimmed)) return false;
+  return trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed);
+}
+
+/** "CERTIFICATIONS" -> "Certifications"; leaves anything with existing lowercase (already sensibly cased) alone. */
+function normalizeHeadingTitle(raw: string): string {
+  const trimmed = raw.trim();
+  if (/[a-z]/.test(trimmed)) return trimmed;
+  return trimmed.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+interface DetectedSection {
+  key: KnownSectionKey | null;
+  title: string;
+  lines: string[];
+}
+
+function splitIntoSections(lines: string[]): { header: string[]; detected: DetectedSection[] } {
+  const detected: DetectedSection[] = [];
+  let current: DetectedSection | null = null;
   const header: string[] = [];
 
   for (const line of lines) {
-    const match = matchSectionHeader(line);
-    if (match) {
-      currentKey = match.key;
-      if (!sections[match.key]) sections[match.key] = [];
-      if (match.rest) sections[match.key]!.push(match.rest);
+    const known = matchSectionHeader(line);
+    if (known) {
+      current = { key: known.key, title: SECTION_TITLES[known.key], lines: [] };
+      detected.push(current);
+      if (known.rest) current.lines.push(known.rest);
       continue;
     }
-    if (currentKey) {
-      sections[currentKey]!.push(line);
+    if (looksLikeGenericHeading(line)) {
+      current = { key: null, title: normalizeHeadingTitle(line), lines: [] };
+      detected.push(current);
+      continue;
+    }
+    if (current) {
+      current.lines.push(line);
     } else {
       header.push(line);
     }
   }
-  return { header, sections };
+  return { header, detected };
+}
+
+/** Concatenates the lines of every detected section matching a known key, in document order — a
+ * resume that (unusually) repeats the same header keyword more than once still merges cleanly. */
+function linesForKey(detected: DetectedSection[], key: KnownSectionKey): string[] {
+  return detected.filter((d) => d.key === key).flatMap((d) => d.lines);
 }
 
 /**
@@ -272,7 +322,7 @@ const JOB_TITLE_KEYWORDS =
  * position-first, but "|" and "-" are used both ways) — so this looks for job-title vocabulary in
  * each half first, and only falls back to a fixed convention per separator when that's inconclusive.
  */
-function splitHeader(header: string): { position?: string; company?: string } {
+function splitHeader(header: string): { subheading?: string; heading?: string } {
   const separators = [" at ", " @ ", " | ", " – ", " — ", " - ", ", "];
   for (const sep of separators) {
     if (!header.includes(sep)) continue;
@@ -283,14 +333,14 @@ function splitHeader(header: string): { position?: string; company?: string } {
 
     const leftIsTitle = JOB_TITLE_KEYWORDS.test(left);
     const rightIsTitle = JOB_TITLE_KEYWORDS.test(right);
-    if (leftIsTitle && !rightIsTitle) return { position: left, company: right };
-    if (rightIsTitle && !leftIsTitle) return { position: right, company: left };
+    if (leftIsTitle && !rightIsTitle) return { subheading: left, heading: right };
+    if (rightIsTitle && !leftIsTitle) return { subheading: right, heading: left };
 
     // Inconclusive — fall back to convention: "at"/"," read position-first, "|"/dash read company-first.
-    if (sep === " at " || sep === " @ " || sep === ", ") return { position: left, company: right };
-    return { company: left, position: right };
+    if (sep === " at " || sep === " @ " || sep === ", ") return { subheading: left, heading: right };
+    return { heading: left, subheading: right };
   }
-  return { company: header || undefined };
+  return { heading: header || undefined };
 }
 
 /** Splits on sentence boundaries — used as a highlights fallback when no bullet characters were found at all. */
@@ -319,13 +369,15 @@ function highlightsAndBody(highlights: string[], bodyLines: string[]): { highlig
   return {};
 }
 
-function parseWorkEntry(chunk: string[]): ResumeWork {
+/** Generic "Header | ... | Date" style entry — used for work entries and for any unrecognized
+ * (custom) section whose content looks like repeated dated entries. */
+function parseGenericEntry(chunk: string[]): ResumeEntryItem {
   const { start, end, headerText, highlights, bodyLines } = parseEntryBody(chunk);
-  const { position, company } = splitHeader(headerText);
+  const { subheading, heading } = splitHeader(headerText);
   const { highlights: finalHighlights, body } = highlightsAndBody(highlights, bodyLines);
   return {
-    companyName: company || headerText || "Unknown Company",
-    positionName: position,
+    heading: heading || headerText || "Unknown",
+    subheading,
     startDate: start,
     endDate: end,
     summary: body,
@@ -333,7 +385,7 @@ function parseWorkEntry(chunk: string[]): ResumeWork {
   };
 }
 
-function parseEducationEntry(chunk: string[]): ResumeEducation {
+function parseEducationEntry(chunk: string[]): ResumeEntryItem {
   const { start, end, headerText, bodyLines } = parseEntryBody(chunk);
   // The degree line is often "Degree Name | <trailing text>". When that trailing text is a real
   // date range, parseEntryBody's date extraction has already stripped it out (start/end are set).
@@ -344,26 +396,26 @@ function parseEducationEntry(chunk: string[]): ResumeEducation {
   const hasDateRange = start !== undefined;
 
   return {
-    institution: headerText || "Unknown Institution",
-    studyType: degreePart || undefined,
+    heading: headerText || "Unknown Institution",
+    subheading: degreePart || undefined,
     startDate: hasDateRange ? start : trailingNote || undefined,
     endDate: hasDateRange ? end : undefined,
   };
 }
 
-function parseProjectEntry(chunk: string[]): ResumeProject {
+function parseProjectEntry(chunk: string[]): ResumeEntryItem {
   const { start, end, headerText, highlights, bodyLines } = parseEntryBody(chunk);
   const { highlights: finalHighlights, body } = highlightsAndBody(highlights, bodyLines);
   return {
-    name: headerText || "Untitled Project",
+    heading: headerText || "Untitled Project",
     startDate: start,
     endDate: end,
-    description: body,
+    summary: body,
     highlights: finalHighlights,
   };
 }
 
-function parseSkills(lines: string[]): ResumeSkill[] {
+function parseSkills(lines: string[]): ResumeSkillItem[] {
   const keywords = lines
     .join(", ")
     .split(/[,;•\n]+/)
@@ -388,7 +440,7 @@ export function parseResumeText(rawText: string): ResumeData {
   }
 
   const lines = text.split("\n").map((l) => l.trim());
-  const { header, sections } = splitIntoSections(lines);
+  const { header, detected } = splitIntoSections(lines);
   const headerNonEmpty = header.filter((l) => l.length > 0);
   const nonEmptyLines = lines.filter((l) => l.length > 0);
 
@@ -402,20 +454,56 @@ export function parseResumeText(rawText: string): ResumeData {
     email: contact.email,
     phone: contact.phone,
     url: contact.url,
-    summary: sections.summary?.join(" ").trim() || undefined,
+    summary: linesForKey(detected, "summary").join(" ").trim() || undefined,
     profiles: contact.profiles.length ? contact.profiles : undefined,
   };
 
-  const work = sections.work ? splitIntoEntries(sections.work).map(parseWorkEntry) : undefined;
-  const education = sections.education ? splitIntoEntries(sections.education).map(parseEducationEntry) : undefined;
-  const projects = sections.projects ? splitIntoEntries(sections.projects).map(parseProjectEntry) : undefined;
-  const skills = sections.skills ? parseSkills(sections.skills) : undefined;
+  const sections: ResumeSection[] = [];
 
-  return {
-    basics,
-    work: work?.length ? work : undefined,
-    education: education?.length ? education : undefined,
-    skills: skills?.length ? skills : undefined,
-    projects: projects?.length ? projects : undefined,
-  };
+  const workLines = linesForKey(detected, "work");
+  if (workLines.length) {
+    const items = splitIntoEntries(workLines).map(parseGenericEntry);
+    if (items.length) sections.push({ title: SECTION_TITLES.work, type: "entries", items });
+  }
+
+  const educationLines = linesForKey(detected, "education");
+  if (educationLines.length) {
+    const items = splitIntoEntries(educationLines).map(parseEducationEntry);
+    if (items.length) sections.push({ title: SECTION_TITLES.education, type: "entries", items });
+  }
+
+  const projectLines = linesForKey(detected, "projects");
+  if (projectLines.length) {
+    const items = splitIntoEntries(projectLines).map(parseProjectEntry);
+    if (items.length) sections.push({ title: SECTION_TITLES.projects, type: "entries", items });
+  }
+
+  const skillsLines = linesForKey(detected, "skills");
+  if (skillsLines.length) {
+    const items = parseSkills(skillsLines);
+    if (items.length) sections.push({ title: SECTION_TITLES.skills, type: "skills", items });
+  }
+
+  // Any heading this parser didn't recognize (Certifications, Awards, Publications, ...) — kept as
+  // its own section instead of being silently dropped, with its type inferred from its content.
+  for (const section of detected) {
+    if (section.key !== null) continue;
+    if (!section.lines.some((l) => l.trim().length > 0)) continue;
+
+    const looksDated = section.lines.some((l) => DATE_RANGE_RE.test(l));
+    if (looksDated) {
+      const items = splitIntoEntries(section.lines).map(parseGenericEntry);
+      if (items.length) sections.push({ title: section.title, type: "entries", items });
+      continue;
+    }
+
+    const body = section.lines
+      .map((l) => stripBullet(l) ?? l)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (body) sections.push({ title: section.title, type: "text", items: body });
+  }
+
+  return { basics, sections };
 }

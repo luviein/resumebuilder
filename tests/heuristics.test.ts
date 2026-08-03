@@ -1,6 +1,17 @@
 import { describe, it, expect } from "vitest";
 import { parseResumeText, EmptyResumeTextError } from "../src/lib/importers/heuristics";
 import { validateResumeJson } from "../src/lib/validate";
+import type { ResumeData, ResumeEntriesSection, ResumeSkillsSection } from "../src/types/resume";
+
+function entriesSection(result: ResumeData, title: string): ResumeEntriesSection | undefined {
+  const section = result.sections.find((s) => s.title === title);
+  return section?.type === "entries" ? section : undefined;
+}
+
+function skillsSection(result: ResumeData, title: string): ResumeSkillsSection | undefined {
+  const section = result.sections.find((s) => s.title === title);
+  return section?.type === "skills" ? section : undefined;
+}
 
 const SAMPLE_RESUME_TEXT = `
 Jordan Rivera
@@ -55,12 +66,13 @@ describe("parseResumeText", () => {
     expect(result.basics.summary).toMatch(/Backend-leaning engineer/);
   });
 
-  it("splits experience into entries with company/position/dates/highlights", () => {
-    expect(result.work).toHaveLength(2);
-    const [first, second] = result.work!;
+  it("splits experience into an Experience section with heading/subheading/dates/highlights", () => {
+    const experience = entriesSection(result, "Experience");
+    expect(experience?.items).toHaveLength(2);
+    const [first, second] = experience!.items;
 
-    expect(first.companyName).toBe("Northwind Systems");
-    expect(first.positionName).toBe("Senior Software Engineer");
+    expect(first.heading).toBe("Northwind Systems");
+    expect(first.subheading).toBe("Senior Software Engineer");
     expect(first.startDate).toBe("2022-03");
     expect(first.endDate).toBe("");
     expect(first.highlights).toEqual([
@@ -68,21 +80,23 @@ describe("parseResumeText", () => {
       "Mentored two junior engineers",
     ]);
 
-    expect(second.companyName).toBe("Bluefin Analytics");
+    expect(second.heading).toBe("Bluefin Analytics");
     expect(second.startDate).toBe("2019-06");
     expect(second.endDate).toBe("2022-02");
   });
 
-  it("extracts an education entry with dates", () => {
-    expect(result.education).toHaveLength(1);
-    expect(result.education![0].institution).toBe("University of Oregon");
-    expect(result.education![0].startDate).toBe("2015-09");
-    expect(result.education![0].endDate).toBe("2019-06");
+  it("extracts an Education section entry with dates", () => {
+    const education = entriesSection(result, "Education");
+    expect(education?.items).toHaveLength(1);
+    expect(education!.items[0].heading).toBe("University of Oregon");
+    expect(education!.items[0].startDate).toBe("2015-09");
+    expect(education!.items[0].endDate).toBe("2019-06");
   });
 
   it("flattens the skills section into keywords", () => {
-    expect(result.skills).toHaveLength(1);
-    expect(result.skills![0].keywords).toEqual(["TypeScript", "Node.js", "PostgreSQL", "React"]);
+    const skills = skillsSection(result, "Skills");
+    expect(skills?.items).toHaveLength(1);
+    expect(skills!.items[0].keywords).toEqual(["TypeScript", "Node.js", "PostgreSQL", "React"]);
   });
 
   it("produces output that always passes validateResumeJson", () => {
@@ -124,14 +138,16 @@ describe("parseResumeText edge cases", () => {
 
     const result = parseResumeText(text);
 
-    expect(result.work).toHaveLength(2);
-    expect(result.work![0].companyName).toBe("Globex Inc");
-    expect(result.work![0].highlights).toEqual(["Built a churn dashboard used by 5 teams"]);
-    expect(result.work![1].companyName).toBe("Prior Co");
-    expect(result.work![1].startDate).toBe("2017-01");
+    const experience = entriesSection(result, "Experience");
+    expect(experience?.items).toHaveLength(2);
+    expect(experience!.items[0].heading).toBe("Globex Inc");
+    expect(experience!.items[0].highlights).toEqual(["Built a churn dashboard used by 5 teams"]);
+    expect(experience!.items[1].heading).toBe("Prior Co");
+    expect(experience!.items[1].startDate).toBe("2017-01");
 
-    expect(result.education).toHaveLength(1);
-    expect(result.education![0].institution).toBe("Lakeside College");
+    const education = entriesSection(result, "Education");
+    expect(education?.items).toHaveLength(1);
+    expect(education!.items[0].heading).toBe("Lakeside College");
   });
 
   it("recognizes a pluralized section header ('EXPERIENCES')", () => {
@@ -147,10 +163,13 @@ describe("parseResumeText edge cases", () => {
 
     const result = parseResumeText(text);
 
-    expect(result.skills).toHaveLength(1);
-    expect(result.skills![0].keywords).toEqual(["Python", "SQL"]);
-    expect(result.work).toHaveLength(1);
-    expect(result.work![0].companyName).toBe("Visa");
+    const skills = skillsSection(result, "Skills");
+    expect(skills?.items).toHaveLength(1);
+    expect(skills!.items[0].keywords).toEqual(["Python", "SQL"]);
+
+    const experience = entriesSection(result, "Experience");
+    expect(experience?.items).toHaveLength(1);
+    expect(experience!.items[0].heading).toBe("Visa");
   });
 
   it("recovers content trapped on the same line as a merged section header", () => {
@@ -168,10 +187,13 @@ describe("parseResumeText edge cases", () => {
 
     const result = parseResumeText(text);
 
-    expect(result.skills).toHaveLength(1);
-    expect(result.skills![0].keywords).toEqual(["Python", "SQL"]);
-    expect(result.work).toHaveLength(1);
-    expect(result.work![0].companyName).toBe("Visa");
+    const skills = skillsSection(result, "Skills");
+    expect(skills?.items).toHaveLength(1);
+    expect(skills!.items[0].keywords).toEqual(["Python", "SQL"]);
+
+    const experience = entriesSection(result, "Experience");
+    expect(experience?.items).toHaveLength(1);
+    expect(experience!.items[0].heading).toBe("Visa");
   });
 
   it("reads 'Company | Position' headers correctly, not just 'Position, Company'", () => {
@@ -188,9 +210,10 @@ describe("parseResumeText edge cases", () => {
 
     const result = parseResumeText(text);
 
-    expect(result.work).toHaveLength(1);
-    expect(result.work![0].companyName).toBe("Visa");
-    expect(result.work![0].positionName).toBe("Software Engineer");
+    const experience = entriesSection(result, "Experience");
+    expect(experience?.items).toHaveLength(1);
+    expect(experience!.items[0].heading).toBe("Visa");
+    expect(experience!.items[0].subheading).toBe("Software Engineer");
   });
 
   it("splits a bullet-less entry body into multiple highlights instead of one dense paragraph", () => {
@@ -205,9 +228,10 @@ describe("parseResumeText edge cases", () => {
     ].join("\n");
 
     const result = parseResumeText(text);
+    const experience = entriesSection(result, "Experience");
 
-    expect(result.work![0].summary).toBeUndefined();
-    expect(result.work![0].highlights).toEqual([
+    expect(experience!.items[0].summary).toBeUndefined();
+    expect(experience!.items[0].highlights).toEqual([
       "Owned end-to-end frontend features.",
       "Leveraged LLMs for agentic development.",
       "Partnered across teams to align schemas.",
@@ -233,17 +257,53 @@ describe("parseResumeText edge cases", () => {
     ].join("\n");
 
     const result = parseResumeText(text);
+    const experience = entriesSection(result, "Experience");
 
-    expect(result.work).toHaveLength(2);
-    expect(result.work![0].companyName).toBe("Visa");
-    expect(result.work![0].positionName).toBe("Software Engineer");
-    expect(result.work![0].highlights).toEqual([
+    expect(experience?.items).toHaveLength(2);
+    expect(experience!.items[0].heading).toBe("Visa");
+    expect(experience!.items[0].subheading).toBe("Software Engineer");
+    expect(experience!.items[0].highlights).toEqual([
       "Engineered an automated Jira script fetching live bugs, improving visibility and reducing sprint tracking effort by 85%.",
     ]);
 
-    expect(result.work![1].companyName).toBe("Visa");
-    expect(result.work![1].positionName).toBe("Associate Test Engineer");
-    expect(result.work![1].startDate).toBe("2024-04");
+    expect(experience!.items[1].heading).toBe("Visa");
+    expect(experience!.items[1].subheading).toBe("Associate Test Engineer");
+    expect(experience!.items[1].startDate).toBe("2024-04");
+  });
+
+  it("recognizes an unrecognized ALL-CAPS heading (e.g. Certifications) as its own text section", () => {
+    // No keyword vocabulary for "CERTIFICATIONS" exists — it should still become a real section
+    // instead of being silently absorbed into whatever section came before it.
+    const text = [
+      "Sam Rivera",
+      "SKILLS",
+      "Python, SQL",
+      "LANGUAGES",
+      "English, Spanish, French",
+    ].join("\n");
+
+    const result = parseResumeText(text);
+    const languages = result.sections.find((s) => s.title === "Languages");
+    expect(languages?.type).toBe("text");
+    if (languages?.type === "text") {
+      expect(languages.items).toBe("English, Spanish, French");
+    }
+  });
+
+  it("infers an 'entries' type for an unrecognized heading whose content looks like dated entries", () => {
+    const text = [
+      "Sam Rivera",
+      "CERTIFICATIONS",
+      "AWS Certified Solutions Architect",
+      "Jan 2023 - Present",
+    ].join("\n");
+
+    const result = parseResumeText(text);
+    const certifications = entriesSection(result, "Certifications");
+    expect(certifications?.items).toHaveLength(1);
+    expect(certifications!.items[0].heading).toBe("AWS Certified Solutions Architect");
+    expect(certifications!.items[0].startDate).toBe("2023-01");
+    expect(certifications!.items[0].endDate).toBe("");
   });
 
   // Real raw pdf.js output (PII anonymized) from a resume where every job header is written as
@@ -295,13 +355,13 @@ Bachelor in Accountancy | Jul 2019 – Jul 2021`;
 
   it("correctly splits three jobs that each use a single combined 'Company | Position | Date' header line", () => {
     const result = parseResumeText(REAL_WORLD_RESUME_TEXT);
+    const experience = entriesSection(result, "Experience");
 
-    expect(result.work).toHaveLength(3);
+    expect(experience?.items).toHaveLength(3);
+    const [job1, job2, job3] = experience!.items;
 
-    const [job1, job2, job3] = result.work!;
-
-    expect(job1.companyName).toBe("Visa");
-    expect(job1.positionName).toBe("Soware Engineer");
+    expect(job1.heading).toBe("Visa");
+    expect(job1.subheading).toBe("Soware Engineer");
     expect(job1.startDate).toBe("2026-02");
     expect(job1.endDate).toBe("2026-07");
     expect(job1.highlights).toHaveLength(6);
@@ -311,17 +371,17 @@ Bachelor in Accountancy | Jul 2019 – Jul 2021`;
     );
     // The wrongly-split fragment must not appear as its own entry, and the real header must not
     // leak into a bullet of the wrong entry.
-    expect(result.work!.some((w) => /^reducing sprint tracking/.test(w.companyName))).toBe(false);
+    expect(experience!.items.some((w) => /^reducing sprint tracking/.test(w.heading))).toBe(false);
 
-    expect(job2.companyName).toBe("Visa");
-    expect(job2.positionName).toBe("Associate Test Engineer");
+    expect(job2.heading).toBe("Visa");
+    expect(job2.subheading).toBe("Associate Test Engineer");
     expect(job2.startDate).toBe("2024-04");
     expect(job2.endDate).toBe("2026-02");
     expect(job2.highlights!.some((h) => h.startsWith("Visa |"))).toBe(false);
     expect(job2.highlights![0]).toMatch(/^Expanded scope in 2025/);
 
-    expect(job3.companyName).toBe("Visa");
-    expect(job3.positionName).toBe("Test Engineer Trainee");
+    expect(job3.heading).toBe("Visa");
+    expect(job3.subheading).toBe("Test Engineer Trainee");
     expect(job3.startDate).toBe("2023-04");
     expect(job3.endDate).toBe("2024-04");
     expect(job3.highlights!.some((h) => h.startsWith("Visa |"))).toBe(false);
@@ -332,24 +392,25 @@ Bachelor in Accountancy | Jul 2019 – Jul 2021`;
     // entry never sets currentHasDate — regression test that this doesn't wedge the parser into
     // merging every remaining education entry into one.
     const result = parseResumeText(REAL_WORLD_RESUME_TEXT);
+    const education = entriesSection(result, "Education");
 
-    expect(result.education).toHaveLength(3);
-    const [edu1, edu2, edu3] = result.education!;
+    expect(education?.items).toHaveLength(3);
+    const [edu1, edu2, edu3] = education!.items;
 
-    expect(edu1.institution).toBe("Example University");
-    expect(edu1.studyType).toBe("Bachelor of Information Technology");
+    expect(edu1.heading).toBe("Example University");
+    expect(edu1.subheading).toBe("Bachelor of Information Technology");
     // No real date range for this one — the non-range trailing text ("Admitted for Aug 2026
     // (Studies Deferred)") should still surface as the date note rather than being dropped.
     expect(edu1.startDate).toBe("Admitted for Aug 2026 (Studies Deferred)");
     expect(edu1.endDate).toBeUndefined();
 
-    expect(edu2.institution).toBe("Example Institute of Systems Science");
-    expect(edu2.studyType).toBe("Professional Diploma in Soware Development");
+    expect(edu2.heading).toBe("Example Institute of Systems Science");
+    expect(edu2.subheading).toBe("Professional Diploma in Soware Development");
     expect(edu2.startDate).toBe("2023-04");
     expect(edu2.endDate).toBe("2024-04");
 
-    expect(edu3.institution).toBe("Sample University");
-    expect(edu3.studyType).toBe("Bachelor in Accountancy");
+    expect(edu3.heading).toBe("Sample University");
+    expect(edu3.subheading).toBe("Bachelor in Accountancy");
     expect(edu3.startDate).toBe("2019-07");
     expect(edu3.endDate).toBe("2021-07");
   });

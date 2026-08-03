@@ -24,63 +24,80 @@
       }
     ]
   },
-  "work": [
+  "sections": [
     {
-      "companyName": "Northwind Systems",
-      "positionName": "Senior Software Engineer",
-      "url": "https://northwind.example.com",
-      "startDate": "2022-03",
-      "endDate": "",
-      "summary": "Own the payments processing service on a team of five.",
-      "highlights": [
-        "Redesigned the retry pipeline, cutting failed-payment support tickets by 40%",
-        "Led migration from a monolith to two focused services with zero downtime",
-        "Mentored two junior engineers through their first on-call rotations"
+      "title": "Experience",
+      "type": "entries",
+      "items": [
+        {
+          "heading": "Northwind Systems",
+          "subheading": "Senior Software Engineer",
+          "url": "https://northwind.example.com",
+          "startDate": "2022-03",
+          "endDate": "",
+          "summary": "Own the payments processing service on a team of five.",
+          "highlights": [
+            "Redesigned the retry pipeline, cutting failed-payment support tickets by 40%",
+            "Led migration from a monolith to two focused services with zero downtime",
+            "Mentored two junior engineers through their first on-call rotations"
+          ]
+        },
+        {
+          "heading": "Bluefin Analytics",
+          "subheading": "Software Engineer",
+          "url": "https://bluefin.example.com",
+          "startDate": "2019-06",
+          "endDate": "2022-02",
+          "summary": "Built internal tooling for the data science team.",
+          "highlights": [
+            "Shipped a self-serve dashboard that replaced ~10 hrs/week of manual reporting",
+            "Introduced integration tests, raising CI confidence enough to enable same-day deploys"
+          ]
+        }
       ]
     },
     {
-      "companyName": "Bluefin Analytics",
-      "positionName": "Software Engineer",
-      "url": "https://bluefin.example.com",
-      "startDate": "2019-06",
-      "endDate": "2022-02",
-      "summary": "Built internal tooling for the data science team.",
-      "highlights": [
-        "Shipped a self-serve dashboard that replaced ~10 hrs/week of manual reporting",
-        "Introduced integration tests, raising CI confidence enough to enable same-day deploys"
+      "title": "Education",
+      "type": "entries",
+      "items": [
+        {
+          "heading": "University of Oregon",
+          "subheading": "B.S., Computer Science",
+          "startDate": "2015-09",
+          "endDate": "2019-06"
+        }
       ]
-    }
-  ],
-  "education": [
-    {
-      "institution": "University of Oregon",
-      "area": "Computer Science",
-      "studyType": "B.S.",
-      "startDate": "2015-09",
-      "endDate": "2019-06"
-    }
-  ],
-  "skills": [
-    {
-      "name": "Backend",
-      "keywords": ["TypeScript", "Node.js", "PostgreSQL", "Redis"]
     },
     {
-      "name": "Frontend",
-      "keywords": ["React", "CSS", "Accessibility"]
+      "title": "Skills",
+      "type": "skills",
+      "items": [
+        {
+          "name": "Backend",
+          "keywords": ["TypeScript", "Node.js", "PostgreSQL", "Redis"]
+        },
+        {
+          "name": "Frontend",
+          "keywords": ["React", "CSS", "Accessibility"]
+        },
+        {
+          "name": "Practices",
+          "keywords": ["Testing", "CI/CD", "Code Review"]
+        }
+      ]
     },
     {
-      "name": "Practices",
-      "keywords": ["Testing", "CI/CD", "Code Review"]
-    }
-  ],
-  "projects": [
-    {
-      "name": "offline-resume",
-      "description": "This resume builder — a privacy-first, offline, JSON-driven resume tool.",
-      "url": "https://github.com/jrivera/offline-resume",
-      "highlights": [
-        "Renders ATS-friendly PDFs entirely client-side with no server or tracking"
+      "title": "Projects",
+      "type": "entries",
+      "items": [
+        {
+          "heading": "offline-resume",
+          "summary": "This resume builder — a privacy-first, offline, JSON-driven resume tool.",
+          "url": "https://github.com/jrivera/offline-resume",
+          "highlights": [
+            "Renders ATS-friendly PDFs entirely client-side with no server or tracking"
+          ]
+        }
       ]
     }
   ]

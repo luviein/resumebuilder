@@ -1,7 +1,11 @@
-// Based on the JSON Resume schema (https://jsonresume.org/schema/), with work entry fields
-// renamed (name/position -> companyName/positionName) for clarity — this is a deliberate
-// departure from the standard's field names, not a JSON-Resume-compatible file.
-// Extra fields on a real resume.json are simply ignored, not rejected.
+// `basics` follows the JSON Resume schema (https://jsonresume.org/schema/). Everything else is
+// a `sections[]` array instead of fixed named fields (work/education/skills/projects) — each
+// section has a `title` (fully user-editable heading text) and a `type` that tells a template
+// how to render its `items`. This is what makes arbitrary new sections (Certifications, Awards,
+// Volunteer, ...) possible with zero code changes: they're just another section with a type a
+// template already knows how to draw. Old resume.json files using the legacy work/education/
+// skills/projects fields are migrated into this shape transparently — see migrateLegacySchema in
+// ../lib/validate.ts.
 
 export interface ResumeLocation {
   address?: string;
@@ -28,9 +32,11 @@ export interface ResumeBasics {
   profiles?: ResumeProfile[];
 }
 
-export interface ResumeWork {
-  companyName: string;
-  positionName?: string;
+/** A repeated dated item — a job, a degree, a project. `heading` is the primary name (company,
+ * institution, project name); `subheading` is the secondary detail (position, degree, tagline). */
+export interface ResumeEntryItem {
+  heading: string;
+  subheading?: string;
   url?: string;
   startDate?: string;
   endDate?: string;
@@ -38,36 +44,34 @@ export interface ResumeWork {
   highlights?: string[];
 }
 
-export interface ResumeEducation {
-  institution: string;
-  area?: string;
-  studyType?: string;
-  startDate?: string;
-  endDate?: string;
-  score?: string;
-  courses?: string[];
-}
-
-export interface ResumeSkill {
+export interface ResumeSkillItem {
   name: string;
   level?: string;
   keywords?: string[];
 }
 
-export interface ResumeProject {
-  name: string;
-  description?: string;
-  url?: string;
-  startDate?: string;
-  endDate?: string;
-  highlights?: string[];
-  keywords?: string[];
+export interface ResumeEntriesSection {
+  title: string;
+  type: "entries";
+  items: ResumeEntryItem[];
 }
+
+export interface ResumeSkillsSection {
+  title: string;
+  type: "skills";
+  items: ResumeSkillItem[];
+}
+
+/** Free prose — a single block of text under a heading (e.g. a custom "Publications" section). */
+export interface ResumeTextSection {
+  title: string;
+  type: "text";
+  items: string;
+}
+
+export type ResumeSection = ResumeEntriesSection | ResumeSkillsSection | ResumeTextSection;
 
 export interface ResumeData {
   basics: ResumeBasics;
-  work?: ResumeWork[];
-  education?: ResumeEducation[];
-  skills?: ResumeSkill[];
-  projects?: ResumeProject[];
+  sections: ResumeSection[];
 }

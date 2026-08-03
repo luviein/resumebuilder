@@ -1,7 +1,14 @@
 import "./styles/app.css";
 import { templates, getTemplate } from "./templates";
 import { validateResumeJson } from "./lib/validate";
-import { loadSavedResumeText, saveResumeText, downloadTextFile, readFileAsText } from "./lib/storage";
+import {
+  loadSavedResumeText,
+  saveResumeText,
+  downloadTextFile,
+  readFileAsText,
+  loadSavedTemplateId,
+  saveTemplateId,
+} from "./lib/storage";
 import { exportToPdf } from "./lib/print";
 import { escapeHtml } from "./lib/escapeHtml";
 import {
@@ -13,6 +20,9 @@ import {
   type StylePrefs,
   type SectionStyle,
 } from "./lib/stylePrefs";
+import { renderFormEditor } from "./lib/formEditor";
+import { htmlToMarkup } from "./lib/inlineMarkup";
+import { setAtPath } from "./lib/jsonPath";
 import sampleResume from "./data/sample-resume.json";
 
 const editor = document.getElementById("json-editor") as HTMLTextAreaElement;
@@ -20,8 +30,12 @@ const lineNumbers = document.getElementById("line-numbers") as HTMLDivElement;
 const errorLineHighlight = document.getElementById("error-line-highlight") as HTMLDivElement;
 const preview = document.getElementById("preview") as HTMLDivElement;
 const previewPane = document.getElementById("preview-pane") as HTMLElement;
+const page = document.getElementById("page") as HTMLDivElement;
+const pageScaleWrapper = document.getElementById("page-scale-wrapper") as HTMLDivElement;
 const errorBanner = document.getElementById("error-banner") as HTMLDivElement;
 const infoBanner = document.getElementById("info-banner") as HTMLDivElement;
+const infoBannerText = document.getElementById("info-banner-text") as HTMLSpanElement;
+const infoBannerClose = document.getElementById("info-banner-close") as HTMLButtonElement;
 const loadJsonBtn = document.getElementById("load-json-btn") as HTMLButtonElement;
 const loadJsonInput = document.getElementById("load-json-input") as HTMLInputElement;
 const downloadJsonBtn = document.getElementById("download-json-btn") as HTMLButtonElement;
@@ -30,10 +44,19 @@ const tabEdit = document.getElementById("tab-edit") as HTMLButtonElement;
 const tabPreview = document.getElementById("tab-preview") as HTMLButtonElement;
 const layout = document.querySelector(".layout") as HTMLElement;
 
+const editorWrap = document.querySelector(".editor-wrap") as HTMLElement;
+const formEditorPane = document.getElementById("form-editor") as HTMLDivElement;
+const tabSource = document.getElementById("tab-source") as HTMLButtonElement;
+const tabForm = document.getElementById("tab-form") as HTMLButtonElement;
+
+const formatToolbar = document.getElementById("format-toolbar") as HTMLDivElement;
+
+const templateSelect = document.getElementById("template-select") as HTMLSelectElement;
 const customizeBtn = document.getElementById("customize-btn") as HTMLButtonElement;
 const styleDialog = document.getElementById("style-dialog") as HTMLDialogElement;
 const styleDialogHeader = document.getElementById("style-dialog-header") as HTMLDivElement;
 const styleResetBtn = document.getElementById("style-reset-btn") as HTMLButtonElement;
+const styleAutofitBtn = document.getElementById("style-autofit-btn") as HTMLButtonElement;
 const styleMarginInput = document.getElementById("style-margin") as HTMLInputElement;
 const styleSpacingInput = document.getElementById("style-spacing") as HTMLInputElement;
 const styleLineHeightInput = document.getElementById("style-line-height") as HTMLInputElement;
@@ -185,7 +208,66 @@ styleResetBtn.addEventListener("click", () => {
   applyAndSaveStylePrefs();
 });
 
-const currentTemplateId = templates[0].id;
+const MM_PER_IN = 25.4;
+const PX_PER_MM = 96 / MM_PER_IN;
+const AUTO_FIT_FLOOR = { spacingScale: 0.5, lineHeight: 1, sizeScale: 0.7 };
+
+/** Scales spacing/line-height/font-size together by `factor`, never below each control's own slider minimum. */
+function scaledStylePrefs(base: StylePrefs, factor: number): StylePrefs {
+  const candidate = structuredClone(base);
+  candidate.spacingScale = Math.max(AUTO_FIT_FLOOR.spacingScale, base.spacingScale * factor);
+  candidate.lineHeight = Math.max(AUTO_FIT_FLOOR.lineHeight, base.lineHeight * factor);
+  for (const key of ["header", "heading", "body"] as const) {
+    candidate[key].sizeScale = Math.max(AUTO_FIT_FLOOR.sizeScale, base[key].sizeScale * factor);
+  }
+  return candidate;
+}
+
+styleAutofitBtn.addEventListener("click", () => {
+  const original = structuredClone(stylePrefs);
+  const targetHeightPx = (297 - 2 * original.marginIn * MM_PER_IN) * PX_PER_MM;
+
+  let bestFit = original;
+  let fitted = false;
+  let firstTryFits = false;
+  for (let factor = 1; factor >= 0.6 - 1e-9; factor -= 0.05) {
+    const candidate = scaledStylePrefs(original, factor);
+    applyStylePrefs(previewPane, candidate);
+    bestFit = candidate;
+    const fits = preview.scrollHeight <= targetHeightPx;
+    if (factor === 1) firstTryFits = fits;
+    if (fits) {
+      fitted = true;
+      break;
+    }
+  }
+
+  stylePrefs = bestFit;
+  syncStyleControlsFromPrefs();
+  applyAndSaveStylePrefs();
+  updatePageScale();
+
+  if (firstTryFits) {
+    showInfo("Already fits on one page.");
+  } else if (!fitted) {
+    showInfo("Shrunk as much as readable, but it still doesn't fully fit one page — consider trimming content.");
+  } else {
+    showInfo("Resized to fit one page.");
+  }
+});
+
+templateSelect.innerHTML = templates
+  .map((t) => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`)
+  .join("");
+
+let currentTemplateId = getTemplate(loadSavedTemplateId() ?? "").id;
+templateSelect.value = currentTemplateId;
+
+templateSelect.addEventListener("change", () => {
+  currentTemplateId = getTemplate(templateSelect.value).id;
+  saveTemplateId(currentTemplateId);
+  render();
+});
 
 editor.value = loadSavedResumeText() ?? JSON.stringify(sampleResume, null, 2);
 
@@ -203,12 +285,14 @@ function showError(message: string | null): void {
 
 function showInfo(message: string | null): void {
   if (message) {
-    infoBanner.textContent = message;
+    infoBannerText.textContent = message;
     infoBanner.hidden = false;
   } else {
     infoBanner.hidden = true;
   }
 }
+
+infoBannerClose.addEventListener("click", () => showInfo(null));
 
 /**
  * V8's JSON.parse error messages include "line N column M" — pull the line number out for the
@@ -268,6 +352,23 @@ function updateErrorLineHighlight(): void {
   errorLineHighlight.style.display = "block";
 }
 
+/**
+ * Keeps .page at true A4 proportions regardless of the pane's width, shrinking it (never
+ * enlarging past 100%) to fit narrower panes via a CSS transform. .page-scale-wrapper is sized
+ * in JS to match the *scaled* footprint so the scrollable pane doesn't reserve dead space below
+ * a page that's been shrunk — transforms don't affect layout flow on their own.
+ */
+function updatePageScale(): void {
+  page.style.transform = "";
+  const naturalWidth = page.offsetWidth;
+  const naturalHeight = page.offsetHeight;
+  const availableWidth = previewPane.clientWidth - 24;
+  const scale = Math.min(1, availableWidth / naturalWidth);
+  page.style.transform = scale < 1 ? `scale(${scale})` : "";
+  pageScaleWrapper.style.width = `${naturalWidth * scale}px`;
+  pageScaleWrapper.style.height = `${naturalHeight * scale}px`;
+}
+
 function render(): void {
   const result = validateResumeJson(editor.value);
   if (!result.ok) {
@@ -294,6 +395,7 @@ function render(): void {
   preview.className = `template-${currentTemplateId}`;
   preview.innerHTML = getTemplate(currentTemplateId).render(result.data);
   applyStylePrefs(previewPane, stylePrefs);
+  updatePageScale();
 }
 
 let debounceHandle: number | undefined;
@@ -382,8 +484,144 @@ function setActiveTab(tab: "edit" | "preview"): void {
 tabEdit.addEventListener("click", () => setActiveTab("edit"));
 tabPreview.addEventListener("click", () => setActiveTab("preview"));
 
+/**
+ * Switches the left panel between the raw JSON textarea and a generated form. The form is just
+ * another way to produce the same JSON text — switching TO Form re-parses the current editor
+ * text fresh (so manual edits are always picked up), and every form edit writes straight back
+ * into `editor.value` and calls `render()`, the same as typing would. No separate state.
+ */
+function setActiveEditorTab(tab: "source" | "form"): void {
+  const isSource = tab === "source";
+  tabSource.classList.toggle("is-active", isSource);
+  tabSource.setAttribute("aria-selected", String(isSource));
+  tabForm.classList.toggle("is-active", !isSource);
+  tabForm.setAttribute("aria-selected", String(!isSource));
+  editorWrap.hidden = !isSource;
+  formEditorPane.hidden = isSource;
+
+  if (isSource) return;
+
+  const result = validateResumeJson(editor.value);
+  if (!result.ok) {
+    formEditorPane.innerHTML = "";
+    const message = document.createElement("p");
+    message.className = "form-editor-error";
+    message.textContent = "Fix the JSON error in the JSON view first, then switch back to Form.";
+    formEditorPane.appendChild(message);
+    return;
+  }
+
+  renderFormEditor(
+    formEditorPane,
+    result.data,
+    (updated) => {
+      editor.value = JSON.stringify(updated, null, 2);
+      render();
+    },
+    showInfo,
+  );
+}
+
+tabSource.addEventListener("click", () => setActiveEditorTab("source"));
+tabForm.addEventListener("click", () => setActiveEditorTab("form"));
+
+/** Walks up from `node` to find the nearest ancestor (within #preview) carrying a `data-path` —
+ * the leaf prose elements the template tags as editable (summary, highlight bullets, text
+ * sections). Returns null for selections outside any editable field (headings, dates, chrome). */
+function getEditablePathElement(node: Node | null): HTMLElement | null {
+  let el = node instanceof HTMLElement ? node : node?.parentElement ?? null;
+  while (el && el !== preview) {
+    if (el.hasAttribute("data-path")) return el;
+    el = el.parentElement;
+  }
+  return null;
+}
+
+/** Writes an edited field's current markup back into the resume JSON and re-renders — same
+ * write-through-Source model as the Form editor, so this never becomes a second source of truth. */
+function commitEditableChange(target: HTMLElement): void {
+  const path = target.getAttribute("data-path");
+  if (!path) return;
+  const result = validateResumeJson(editor.value);
+  if (!result.ok) return;
+  setAtPath(result.data, path, htmlToMarkup(target));
+  editor.value = JSON.stringify(result.data, null, 2);
+  render();
+  formatToolbar.hidden = true;
+}
+
+function updateFormatToolbar(): void {
+  const selection = window.getSelection();
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+    formatToolbar.hidden = true;
+    return;
+  }
+  const range = selection.getRangeAt(0);
+  const target = getEditablePathElement(range.commonAncestorContainer);
+  if (!target || !range.toString()) {
+    formatToolbar.hidden = true;
+    return;
+  }
+  const rect = range.getBoundingClientRect();
+  if (rect.width === 0 && rect.height === 0) {
+    formatToolbar.hidden = true;
+    return;
+  }
+  formatToolbar.hidden = false;
+  const left = Math.min(
+    Math.max(8, rect.left + rect.width / 2 - formatToolbar.offsetWidth / 2),
+    window.innerWidth - formatToolbar.offsetWidth - 8,
+  );
+  const top = Math.max(8, rect.top - formatToolbar.offsetHeight - 8);
+  formatToolbar.style.left = `${left}px`;
+  formatToolbar.style.top = `${top}px`;
+}
+
+document.addEventListener("selectionchange", updateFormatToolbar);
+
+// Prevent the toolbar buttons' mousedown from stealing focus away from the contenteditable field,
+// which would collapse the selection before the click handler ever runs.
+formatToolbar.addEventListener("mousedown", (e) => e.preventDefault());
+
+formatToolbar.addEventListener("click", (e) => {
+  const button = (e.target as HTMLElement).closest("button[data-format]") as HTMLButtonElement | null;
+  if (!button) return;
+
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+  const range = selection.getRangeAt(0);
+  const target = getEditablePathElement(range.commonAncestorContainer);
+  const selectedText = range.toString();
+  if (!target || !selectedText) return;
+
+  const format = button.dataset.format;
+  const replacement =
+    format === "bold" ? `**${selectedText}**` :
+    format === "italic" ? `_${selectedText}_` :
+    selectedText.replace(/\*\*/g, "").replace(/_/g, "");
+
+  range.deleteContents();
+  range.insertNode(document.createTextNode(replacement));
+  commitEditableChange(target);
+});
+
+// Prose fields hold a single-line string in the JSON, so Enter shouldn't insert a paragraph break.
+preview.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && getEditablePathElement(e.target as Node)) e.preventDefault();
+});
+
+// focusout (not blur) so this works via event delegation — blur doesn't bubble.
+preview.addEventListener("focusout", (e) => {
+  const target = getEditablePathElement(e.target as Node);
+  if (target) commitEditableChange(target);
+});
+
+new ResizeObserver(updatePageScale).observe(previewPane);
+window.addEventListener("resize", updatePageScale);
+
 setActiveTab("edit");
 render();
+setActiveEditorTab("form");
 
 if ("serviceWorker" in navigator) {
   import("virtual:pwa-register").then(({ registerSW }) => registerSW({ immediate: true }));

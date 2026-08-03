@@ -1,0 +1,137 @@
+/* Modern template — single column, ATS-safe (no tables, no icon-only content). Distinguished
+   from "minimal" through the heading/rule treatment and color usage, not through layout —
+   multi-column layouts confuse ATS text extraction, so every template here stays single-column. */
+
+.template-modern {
+  font-family: var(--resume-font-body, Arial, Helvetica, sans-serif);
+  color: var(--resume-color-body, #1a1a1a);
+  line-height: var(--resume-line-height, 1.45);
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.template-modern .resume-header {
+  margin-bottom: calc(1.25rem * var(--resume-spacing-scale, 1));
+  font-family: var(--resume-font-header, Arial, Helvetica, sans-serif);
+  color: var(--resume-color-header, #1a1a1a);
+}
+
+.template-modern .resume-header::after {
+  content: "";
+  display: block;
+  margin-top: calc(0.75rem * var(--resume-spacing-scale, 1));
+  height: 3px;
+  border-radius: 2px;
+  background: var(--resume-color-header, #1a1a1a);
+}
+
+.template-modern h1 {
+  font-size: calc(2.1rem * var(--resume-size-header, 1));
+  margin: 0 0 0.2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.template-modern .label {
+  font-size: calc(1.05rem * var(--resume-size-header, 1));
+  color: var(--resume-color-header, #1a1a1a);
+  margin: 0 0 0.5rem;
+  font-weight: 500;
+}
+
+.template-modern .contact {
+  font-size: calc(0.88rem * var(--resume-size-header, 1));
+  color: color-mix(in srgb, var(--resume-color-header, #1a1a1a) 65%, white);
+  margin: 0.15rem 0;
+}
+
+.template-modern .contact a {
+  color: inherit;
+}
+
+.template-modern section {
+  margin-bottom: calc(1.15rem * var(--resume-spacing-scale, 1));
+}
+
+.template-modern h2 {
+  font-family: var(--resume-font-heading, Arial, Helvetica, sans-serif);
+  color: var(--resume-color-heading, #1a1a1a);
+  font-size: calc(0.95rem * var(--resume-size-heading, 1));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-left: 4px solid var(--resume-color-heading, #1a1a1a);
+  padding-left: 0.6rem;
+  margin: 0 0 0.6rem;
+}
+
+.template-modern .entry {
+  margin-bottom: calc(0.8rem * var(--resume-spacing-scale, 1));
+  break-inside: avoid;
+}
+
+.template-modern .entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.template-modern .entry-header h3 {
+  font-size: calc(1rem * var(--resume-size-body, 1));
+  margin: 0;
+  font-weight: 600;
+}
+
+.template-modern .entry-dates {
+  font-size: calc(0.82rem * var(--resume-size-body, 1));
+  color: color-mix(in srgb, var(--resume-color-body, #1a1a1a) 60%, white);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.template-modern .entry-summary {
+  margin: 0.25rem 0;
+  font-size: calc(0.92rem * var(--resume-size-body, 1));
+}
+
+.template-modern .highlights {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+  font-size: calc(0.92rem * var(--resume-size-body, 1));
+}
+
+.template-modern .highlights li {
+  margin-bottom: 0.18rem;
+}
+
+.template-modern .highlights li::marker {
+  color: var(--resume-color-heading, #1a1a1a);
+}
+
+.template-modern .skills {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: calc(0.92rem * var(--resume-size-body, 1));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.template-modern .skills li {
+  background: color-mix(in srgb, var(--resume-color-heading, #1a1a1a) 8%, white);
+  border-radius: 0.3rem;
+  padding: 0.2rem 0.5rem;
+}
+
+@media print {
+  .template-modern {
+    max-width: none;
+  }
+
+  .template-modern a {
+    text-decoration: none;
+  }
+}
