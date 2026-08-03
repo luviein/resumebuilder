@@ -59,6 +59,28 @@ export function setActiveEditorTab(tab: "source" | "form"): void {
   );
 }
 
+export function isFormTabActive(): boolean {
+  return !formEditorPane.hidden;
+}
+
+/** Finds the Form editor's field for a preview field's `data-path` (e.g.
+ * "sections.0.items.1.highlights.2") — an exact `data-form-path` match, or, for the combined
+ * highlights textarea (one field standing in for a whole highlights *list*), the longest
+ * `data-form-path` that's a prefix of `path`. */
+export function findFormField(path: string): HTMLElement | null {
+  let best: HTMLElement | null = null;
+  let bestLength = -1;
+  for (const el of formEditorPane.querySelectorAll<HTMLElement>("[data-form-path]")) {
+    const candidate = el.dataset.formPath ?? "";
+    const matches = path === candidate || path.startsWith(`${candidate}.`);
+    if (matches && candidate.length > bestLength) {
+      best = el;
+      bestLength = candidate.length;
+    }
+  }
+  return best;
+}
+
 /** Loads a full replacement of the resume text (restore, import) and refreshes whichever view
  * — Source or Form — is currently showing. render() alone only updates the JSON textarea/preview;
  * the Form pane is only rebuilt by setActiveEditorTab, so it goes stale after a wholesale

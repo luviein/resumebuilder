@@ -5,6 +5,7 @@ import { initCustomizeDialog } from "./ui/customizeDialog";
 import { initHistoryDialog } from "./ui/historyDialog";
 import { initFormatToolbar } from "./ui/formatToolbar";
 import { initImportExport } from "./ui/importExport";
+import { initPreviewFormSync } from "./ui/previewFormSync";
 
 initEditorCore();
 initCustomizeDialog();
@@ -12,6 +13,7 @@ initHistoryDialog();
 initEditorTabs();
 initFormatToolbar();
 initImportExport();
+initPreviewFormSync();
 
 setActiveTab("edit");
 render();

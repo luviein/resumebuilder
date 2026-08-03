@@ -17,7 +17,20 @@ function smallInputEl(labelText: string, value: string, onInput: (v: string) => 
   return label;
 }
 
-function labeledTextarea(labelText: string, value: string, onInput: (v: string) => void, rows = 2): HTMLLabelElement {
+/**
+ * `formPath`, when given, mirrors the same JSON-path convention the preview's editable prose
+ * fields use for their `data-path` attribute (see src/templates/shared/render.ts) — set as
+ * `data-form-path` here so clicking into the corresponding preview field can look this element up
+ * and scroll to it. Only set on textareas that actually have a preview counterpart (summary,
+ * highlights, text-section content) — plain fields like name/email have none.
+ */
+function labeledTextarea(
+  labelText: string,
+  value: string,
+  onInput: (v: string) => void,
+  rows = 2,
+  formPath?: string,
+): HTMLLabelElement {
   const label = document.createElement("label");
   label.className = "form-field form-field-multiline";
   const span = document.createElement("span");
@@ -25,6 +38,7 @@ function labeledTextarea(labelText: string, value: string, onInput: (v: string) 
   const textarea = document.createElement("textarea");
   textarea.value = value;
   textarea.rows = rows;
+  if (formPath) textarea.dataset.formPath = formPath;
   textarea.addEventListener("input", () => onInput(textarea.value));
   label.append(span, textarea);
   return label;
@@ -102,6 +116,7 @@ function buildBasicsFieldset(data: ResumeData, notify: Notify, rebuild: Rebuild)
         notify();
       },
       3,
+      "basics.summary",
     ),
   );
 
@@ -164,6 +179,7 @@ function buildBasicsFieldset(data: ResumeData, notify: Notify, rebuild: Rebuild)
 
 function buildEntryItemForm(
   item: ResumeEntryItem,
+  basePath: string,
   notify: Notify,
   onRemove: () => void,
   onMoveUp: () => void,
@@ -203,10 +219,16 @@ function buildEntryItemForm(
     }),
   );
   wrap.appendChild(
-    labeledTextarea("Summary", item.summary ?? "", (v) => {
-      item.summary = v || undefined;
-      notify();
-    }),
+    labeledTextarea(
+      "Summary",
+      item.summary ?? "",
+      (v) => {
+        item.summary = v || undefined;
+        notify();
+      },
+      2,
+      `${basePath}.summary`,
+    ),
   );
   wrap.appendChild(
     labeledTextarea(
@@ -221,6 +243,7 @@ function buildEntryItemForm(
         notify();
       },
       4,
+      `${basePath}.highlights`,
     ),
   );
 
@@ -277,6 +300,7 @@ function buildSectionFieldset(
   showMessage: ShowMessage,
 ): HTMLFieldSetElement {
   const section = data.sections[index];
+  const basePath = `sections.${index}`;
   const fs = document.createElement("fieldset");
   fs.className = "form-fieldset form-section";
   fs.dataset.sectionIndex = String(index);
@@ -337,6 +361,7 @@ function buildSectionFieldset(
     section.items.forEach((item, i) => {
       const entryEl = buildEntryItemForm(
         item,
+        `${basePath}.items.${i}`,
         notify,
         () => {
           section.items.splice(i, 1);
@@ -409,6 +434,7 @@ function buildSectionFieldset(
           notify();
         },
         4,
+        `${basePath}.items`,
       ),
     );
   }
