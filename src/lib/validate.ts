@@ -1,8 +1,6 @@
 import type { ResumeData } from "../types/resume";
 
-export type ValidationResult =
-  | { ok: true; data: ResumeData }
-  | { ok: false; error: string };
+export type ValidationResult = { ok: true; data: ResumeData } | { ok: false; error: string };
 
 const SECTION_TYPES = ["entries", "skills", "text"] as const;
 
@@ -41,14 +39,17 @@ export function validateResumeJson(raw: string): ValidationResult {
 
   for (const section of obj.sections) {
     if (typeof section !== "object" || section === null || Array.isArray(section)) {
-      return { ok: false, error: "Each entry in \"sections\" must be an object." };
+      return { ok: false, error: 'Each entry in "sections" must be an object.' };
     }
     const s = section as Record<string, unknown>;
     if (typeof s.title !== "string") {
       return { ok: false, error: 'Each section needs a "title" string.' };
     }
     if (!SECTION_TYPES.includes(s.type as (typeof SECTION_TYPES)[number])) {
-      return { ok: false, error: `Section "${s.title}" has an unknown "type" — must be one of: ${SECTION_TYPES.join(", ")}.` };
+      return {
+        ok: false,
+        error: `Section "${s.title}" has an unknown "type" — must be one of: ${SECTION_TYPES.join(", ")}.`,
+      };
     }
     if (s.type === "text" ? typeof s.items !== "string" : !Array.isArray(s.items)) {
       return { ok: false, error: `Section "${s.title}"'s "items" doesn't match its type.` };
@@ -115,9 +116,10 @@ function migrateLegacySchema(obj: Record<string, unknown>): unknown[] {
       items: obj.education.map((entry) => {
         const e = (entry ?? {}) as Record<string, unknown>;
         const subheading = [str(e.studyType), str(e.area)].filter(Boolean).join(", ") || undefined;
-        const highlights = Array.isArray(e.courses) && e.courses.length
-          ? [`Coursework: ${(e.courses as unknown[]).join(", ")}`]
-          : undefined;
+        const highlights =
+          Array.isArray(e.courses) && e.courses.length
+            ? [`Coursework: ${(e.courses as unknown[]).join(", ")}`]
+            : undefined;
         const summary = str(e.score) ? `Score: ${e.score}` : undefined;
         return {
           heading: str(e.institution) ?? "Unknown Institution",

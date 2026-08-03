@@ -2,10 +2,7 @@ import type { ResumeData, ResumeSection, ResumeEntryItem, ResumeSkillItem } from
 import { escapeHtml } from "../../lib/escapeHtml";
 import { markupToHtml } from "../../lib/inlineMarkup";
 
-const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** Formats "YYYY-MM" or "YYYY-MM-DD" as "Mon YYYY"; passes through anything else unchanged. */
 function formatDate(value: string | undefined): string {

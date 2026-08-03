@@ -48,7 +48,9 @@ export function initImportExport(): void {
       loadResumeText(JSON.stringify(data, null, 2));
       showInfo(`Imported from "${file.name}" — review dates and sections below, they may need correcting.`);
     } catch (err) {
-      showError(err instanceof Error ? err.message : "Couldn't read that file. Try Load JSON with a .json file instead.");
+      showError(
+        err instanceof Error ? err.message : "Couldn't read that file. Try Load JSON with a .json file instead.",
+      );
     } finally {
       loadJsonBtn.disabled = false;
       loadJsonBtn.textContent = IMPORT_BUTTON_LABEL;

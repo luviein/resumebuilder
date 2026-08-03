@@ -37,10 +37,8 @@ describe("validateResumeJson", () => {
     expect(result.ok).toBe(false);
   });
 
-  it("rejects a non-array \"sections\"", () => {
-    const result = validateResumeJson(
-      JSON.stringify({ basics: { name: "Ada" }, sections: "not an array" }),
-    );
+  it('rejects a non-array "sections"', () => {
+    const result = validateResumeJson(JSON.stringify({ basics: { name: "Ada" }, sections: "not an array" }));
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toMatch(/sections/);
@@ -113,7 +111,9 @@ describe("validateResumeJson", () => {
     const result = validateResumeJson(
       JSON.stringify({
         basics: { name: "Ada Lovelace" },
-        work: [{ name: "Legacy Name", companyName: "Correct Name", position: "Legacy Title", positionName: "Correct Title" }],
+        work: [
+          { name: "Legacy Name", companyName: "Correct Name", position: "Legacy Title", positionName: "Correct Title" },
+        ],
       }),
     );
     expect(result.ok).toBe(true);

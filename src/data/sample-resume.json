@@ -94,9 +94,7 @@
           "heading": "offline-resume",
           "summary": "This resume builder — a privacy-first, offline, JSON-driven resume tool.",
           "url": "https://github.com/jrivera/offline-resume",
-          "highlights": [
-            "Renders ATS-friendly PDFs entirely client-side with no server or tracking"
-          ]
+          "highlights": ["Renders ATS-friendly PDFs entirely client-side with no server or tracking"]
         }
       ]
     }

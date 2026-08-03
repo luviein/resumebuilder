@@ -9,7 +9,7 @@ const formatToolbar = document.getElementById("format-toolbar") as HTMLDivElemen
  * the leaf prose elements the template tags as editable (summary, highlight bullets, text
  * sections). Returns null for selections outside any editable field (headings, dates, chrome). */
 function getEditablePathElement(node: Node | null): HTMLElement | null {
-  let el = node instanceof HTMLElement ? node : node?.parentElement ?? null;
+  let el = node instanceof HTMLElement ? node : (node?.parentElement ?? null);
   while (el && el !== preview) {
     if (el.hasAttribute("data-path")) return el;
     el = el.parentElement;
@@ -77,9 +77,11 @@ export function initFormatToolbar(): void {
 
     const format = button.dataset.format;
     const replacement =
-      format === "bold" ? `**${selectedText}**` :
-      format === "italic" ? `_${selectedText}_` :
-      selectedText.replace(/\*\*/g, "").replace(/_/g, "");
+      format === "bold"
+        ? `**${selectedText}**`
+        : format === "italic"
+          ? `_${selectedText}_`
+          : selectedText.replace(/\*\*/g, "").replace(/_/g, "");
 
     range.deleteContents();
     range.insertNode(document.createTextNode(replacement));

@@ -9,6 +9,9 @@ test("switching templates changes the rendered markup", async ({ page }) => {
 
   // The two templates render visibly different section-heading styling (left-border vs.
   // underline) — confirm the modern stylesheet actually took effect, not just the class name.
-  const borderLeft = await page.locator("#preview h2").first().evaluate((el) => getComputedStyle(el).borderLeftWidth);
+  const borderLeft = await page
+    .locator("#preview h2")
+    .first()
+    .evaluate((el) => getComputedStyle(el).borderLeftWidth);
   expect(parseFloat(borderLeft)).toBeGreaterThan(0);
 });
