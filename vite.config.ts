@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, configDefaults } from "vitest/config";
 import { VitePWA } from "vite-plugin-pwa";
 
 // GitHub Pages serves this as a project site at /resumebuilder/, not the domain root, so every
@@ -30,4 +30,10 @@ export default defineConfig({
       },
     }),
   ],
+  test: {
+    // e2e/ holds Playwright specs, run by a separate command (npm run test:e2e) — without this,
+    // Vitest's default include glob picks them up too and fails since they use Playwright's own
+    // test() outside Playwright's runner.
+    exclude: [...configDefaults.exclude, "e2e/**"],
+  },
 });

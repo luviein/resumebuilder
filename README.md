@@ -64,7 +64,8 @@ Everything after step 1 autosaves to your browser's `localStorage` as you go —
 | `npm run dev`       | Start the Vite dev server with hot reload           |
 | `npm run build`     | Type-check and build the production bundle to `dist/` |
 | `npm run preview`   | Serve the production build locally, for testing offline/PWA behavior |
-| `npm run test`      | Run the Vitest test suite                           |
+| `npm run test`      | Run the Vitest unit test suite                      |
+| `npm run test:e2e`  | Run the Playwright end-to-end suite (builds and serves the production bundle first) |
 
 ## Project structure
 
