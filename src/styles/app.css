@@ -497,6 +497,9 @@ button:disabled {
 .style-dialog-header {
   cursor: move;
   user-select: none;
+  /* Without this, a touch-drag on the header is captured by the browser as a page-scroll
+     gesture instead of reaching the pointermove handler that actually moves the dialog. */
+  touch-action: none;
   padding: 0.75rem 1.25rem;
   border-bottom: 1px solid var(--border);
   background: var(--bg);
