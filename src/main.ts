@@ -224,11 +224,20 @@ historyDialog.addEventListener("close", () => {
   versionSelect.value = "";
 });
 
+/** Loads a full replacement of the resume text (restore, import) and refreshes whichever view
+ * — Source or Form — is currently showing. render() alone only updates the JSON textarea/preview;
+ * the Form pane is only rebuilt by setActiveEditorTab, so it goes stale after a wholesale
+ * replacement unless explicitly refreshed too. */
+function loadResumeText(text: string): void {
+  editor.value = text;
+  render();
+  setActiveEditorTab(formEditorPane.hidden ? "source" : "form");
+}
+
 historyRestoreBtn.addEventListener("click", () => {
   const entry = loadHistory()[Number(versionSelect.value)];
   if (!entry) return;
-  editor.value = entry.text;
-  render();
+  loadResumeText(entry.text);
   historyDialog.close();
   // Explicit, not just relying on the "close" listener above — the reset needs to be reliable
   // right after a restore, since re-selecting the same (now-current) version should be a no-op
@@ -512,8 +521,7 @@ loadJsonInput.addEventListener("change", async () => {
   const extension = file.name.split(".").pop()?.toLowerCase();
 
   if (extension === "json") {
-    editor.value = await readFileAsText(file);
-    render();
+    loadResumeText(await readFileAsText(file));
     return;
   }
 
@@ -533,8 +541,7 @@ loadJsonInput.addEventListener("change", async () => {
     console.log("[Import] Raw extracted text (before heuristic parsing):\n" + text);
     const { parseResumeText } = await import("./lib/importers/heuristics");
     const data = parseResumeText(text);
-    editor.value = JSON.stringify(data, null, 2);
-    render();
+    loadResumeText(JSON.stringify(data, null, 2));
     showInfo(`Imported from "${file.name}" — review dates and sections below, they may need correcting.`);
   } catch (err) {
     showError(err instanceof Error ? err.message : "Couldn't read that file. Try Load JSON with a .json file instead.");
