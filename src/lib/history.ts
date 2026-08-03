@@ -7,10 +7,10 @@ export interface HistoryEntry {
 }
 
 /**
- * Appends a checkpoint, deduped against the immediately-previous one so rapid typing doesn't
- * explode the history into one entry per keystroke, and trimmed to `maxEntries` from the front.
- * Pure — returns `history` unchanged (same reference) when nothing actually changed, so callers
- * can skip a write.
+ * Appends a checkpoint, deduped against the immediately-previous one so clicking Save with no
+ * changes since the last save doesn't create a meaningless duplicate entry, and trimmed to
+ * `maxEntries` from the front. Pure — returns `history` unchanged (same reference) when nothing
+ * actually changed, so callers can skip a write and tell the user nothing new was saved.
  */
 export function appendCheckpoint(
   history: HistoryEntry[],
@@ -39,9 +39,12 @@ function saveHistoryList(entries: HistoryEntry[]): void {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
 }
 
-/** Checkpoints the current resume text, deduped against the last saved checkpoint. */
-export function checkpoint(text: string): void {
+/** Saves the current resume text as a new version, deduped against the last saved checkpoint.
+ * Returns whether a new version was actually saved (false if it was identical to the last one). */
+export function checkpoint(text: string): boolean {
   const history = loadHistory();
   const next = appendCheckpoint(history, text, new Date().toISOString());
-  if (next !== history) saveHistoryList(next);
+  const changed = next !== history;
+  if (changed) saveHistoryList(next);
+  return changed;
 }

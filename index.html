@@ -10,11 +10,16 @@
   <body>
     <div id="app">
       <header class="topbar no-print">
-        <h1 class="app-title">Offline Resume Builder</h1>
+        <div class="topbar-title-group">
+          <h1 class="app-title">Offline Resume Builder</h1>
+          <select id="version-select" class="version-select" aria-label="Saved versions">
+            <option value="" selected disabled hidden>Versions</option>
+          </select>
+          <button id="save-version-btn" type="button" title="Save the current resume as a new version">Save</button>
+        </div>
         <div class="topbar-controls">
           <select id="template-select" aria-label="Template"></select>
           <button id="customize-btn" type="button">Customize</button>
-          <button id="history-btn" type="button" title="View and restore previously saved versions of this resume">History</button>
           <button id="load-json-btn" type="button" title="Import a PDF, DOCX, or JSON resume. PDF/DOCX are auto-parsed and may need review — JSON loads exactly as-is.">Import Resume</button>
           <input id="load-json-input" type="file" accept=".json,application/json,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
           <button id="download-json-btn" type="button">Download JSON</button>
@@ -118,13 +123,9 @@
 
       <dialog id="history-dialog" class="history-dialog no-print">
         <div id="history-dialog-header" class="style-dialog-header">
-          <h2>History</h2>
+          <h2>Compare version</h2>
         </div>
         <form method="dialog" class="history-form">
-          <label class="style-row">
-            <span>Version</span>
-            <select id="history-select"></select>
-          </label>
           <div id="history-diff" class="history-diff"></div>
           <div class="style-dialog-actions">
             <button id="history-restore-btn" type="button">Restore this version</button>
