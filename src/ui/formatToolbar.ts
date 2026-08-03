@@ -60,9 +60,13 @@ function updateFormatToolbar(): void {
 export function initFormatToolbar(): void {
   document.addEventListener("selectionchange", updateFormatToolbar);
 
-  // Prevent the toolbar buttons' mousedown from stealing focus away from the contenteditable field,
-  // which would collapse the selection before the click handler ever runs.
-  formatToolbar.addEventListener("mousedown", (e) => e.preventDefault());
+  // Prevent the toolbar buttons' mousedown/touchstart from stealing focus away from the
+  // contenteditable field, which would collapse the selection before the click handler ever runs.
+  // Both events are needed: touch input clears the selection at touchstart, before any synthetic
+  // mousedown fires, so listening for mousedown alone doesn't stop it on touch devices.
+  const preventFocusSteal = (e: Event): void => e.preventDefault();
+  formatToolbar.addEventListener("mousedown", preventFocusSteal);
+  formatToolbar.addEventListener("touchstart", preventFocusSteal, { passive: false });
 
   formatToolbar.addEventListener("click", (e) => {
     const button = (e.target as HTMLElement).closest("button[data-format]") as HTMLButtonElement | null;
