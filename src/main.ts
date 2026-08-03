@@ -302,13 +302,19 @@ const MM_PER_IN = 25.4;
 const PX_PER_MM = 96 / MM_PER_IN;
 const AUTO_FIT_FLOOR = { spacingScale: 0.5, lineHeight: 1, sizeScale: 0.7 };
 
+/** Rounds to 2 decimal places — matches the sliders' own step="0.05" precision and avoids
+ * floating-point artifacts (e.g. 1.45 * 0.75 === 1.0874999999999999) leaking into the display. */
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 /** Scales spacing/line-height/font-size together by `factor`, never below each control's own slider minimum. */
 function scaledStylePrefs(base: StylePrefs, factor: number): StylePrefs {
   const candidate = structuredClone(base);
-  candidate.spacingScale = Math.max(AUTO_FIT_FLOOR.spacingScale, base.spacingScale * factor);
-  candidate.lineHeight = Math.max(AUTO_FIT_FLOOR.lineHeight, base.lineHeight * factor);
+  candidate.spacingScale = round2(Math.max(AUTO_FIT_FLOOR.spacingScale, base.spacingScale * factor));
+  candidate.lineHeight = round2(Math.max(AUTO_FIT_FLOOR.lineHeight, base.lineHeight * factor));
   for (const key of ["header", "heading", "body"] as const) {
-    candidate[key].sizeScale = Math.max(AUTO_FIT_FLOOR.sizeScale, base[key].sizeScale * factor);
+    candidate[key].sizeScale = round2(Math.max(AUTO_FIT_FLOOR.sizeScale, base[key].sizeScale * factor));
   }
   return candidate;
 }
