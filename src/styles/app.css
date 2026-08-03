@@ -42,6 +42,17 @@ body {
   margin: 0;
 }
 
+.topbar-title-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.version-select {
+  max-width: 10rem;
+}
+
 .topbar-controls {
   display: flex;
   flex-wrap: wrap;

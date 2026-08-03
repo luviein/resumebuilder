@@ -58,10 +58,10 @@ const customizeBtn = document.getElementById("customize-btn") as HTMLButtonEleme
 const styleDialog = document.getElementById("style-dialog") as HTMLDialogElement;
 const styleDialogHeader = document.getElementById("style-dialog-header") as HTMLDivElement;
 
-const historyBtn = document.getElementById("history-btn") as HTMLButtonElement;
+const versionSelect = document.getElementById("version-select") as HTMLSelectElement;
+const saveVersionBtn = document.getElementById("save-version-btn") as HTMLButtonElement;
 const historyDialog = document.getElementById("history-dialog") as HTMLDialogElement;
 const historyDialogHeader = document.getElementById("history-dialog-header") as HTMLDivElement;
-const historySelect = document.getElementById("history-select") as HTMLSelectElement;
 const historyDiff = document.getElementById("history-diff") as HTMLDivElement;
 const historyRestoreBtn = document.getElementById("history-restore-btn") as HTMLButtonElement;
 const styleResetBtn = document.getElementById("style-reset-btn") as HTMLButtonElement;
@@ -184,20 +184,25 @@ function formatHistoryLabel(entry: HistoryEntry): string {
   return new Date(entry.savedAt).toLocaleString();
 }
 
-/** Renders a diff of the selected past version against the current editor content. */
-function renderHistoryDiff(): void {
+/** Rebuilds the topbar version dropdown from saved history — newest first, indices into the
+ * underlying (oldest-first) array so diff/restore can look an entry up directly. Always keeps
+ * the placeholder option so re-selecting the same version later still fires a "change" event. */
+function refreshVersionSelect(): void {
   const history = loadHistory();
-  if (history.length === 0) {
-    historyDiff.textContent = "No saved versions yet.";
-    historyRestoreBtn.disabled = true;
-    return;
+  const options = ['<option value="" selected disabled hidden>Versions</option>'];
+  for (let i = history.length - 1; i >= 0; i--) {
+    options.push(`<option value="${i}">${escapeHtml(formatHistoryLabel(history[i]))}</option>`);
   }
-  const index = Number(historySelect.value);
-  const entry = history[index];
-  historyRestoreBtn.disabled = !entry;
-  historyDiff.innerHTML = "";
+  versionSelect.innerHTML = options.join("");
+}
+
+/** Renders a diff of the selected past version against the current editor content and opens
+ * the comparison dialog. */
+function showVersionDiff(index: number): void {
+  const entry = loadHistory()[index];
   if (!entry) return;
 
+  historyDiff.innerHTML = "";
   for (const op of diffLines(entry.text, editor.value)) {
     const lineEl = document.createElement("div");
     lineEl.className = `diff-line diff-${op.type}`;
@@ -205,31 +210,39 @@ function renderHistoryDiff(): void {
     lineEl.textContent = prefix + op.line;
     historyDiff.appendChild(lineEl);
   }
+  historyDialog.show();
 }
 
-historyBtn.addEventListener("click", () => {
-  const history = loadHistory();
-  const options: string[] = [];
-  // Newest first — indices are into the underlying (oldest-first) array, so diff/restore can
-  // look the entry up directly regardless of display order.
-  for (let i = history.length - 1; i >= 0; i--) {
-    options.push(`<option value="${i}">${escapeHtml(formatHistoryLabel(history[i]))}</option>`);
-  }
-  historySelect.innerHTML = options.join("");
-  renderHistoryDiff();
-  historyDialog.show();
+versionSelect.addEventListener("change", () => {
+  if (versionSelect.value === "") return;
+  showVersionDiff(Number(versionSelect.value));
 });
 
-historySelect.addEventListener("change", renderHistoryDiff);
+// Reset to the placeholder whenever the dialog closes (Escape, Done, or after Restore) so
+// picking the same version again later still triggers "change".
+historyDialog.addEventListener("close", () => {
+  versionSelect.value = "";
+});
 
 historyRestoreBtn.addEventListener("click", () => {
-  const history = loadHistory();
-  const entry = history[Number(historySelect.value)];
+  const entry = loadHistory()[Number(versionSelect.value)];
   if (!entry) return;
   editor.value = entry.text;
   render();
   historyDialog.close();
+  // Explicit, not just relying on the "close" listener above — the reset needs to be reliable
+  // right after a restore, since re-selecting the same (now-current) version should be a no-op
+  // rather than silently doing nothing because the <select> never changed value.
+  versionSelect.value = "";
 });
+
+saveVersionBtn.addEventListener("click", () => {
+  const saved = checkpoint(editor.value);
+  refreshVersionSelect();
+  showInfo(saved ? "Version saved." : "Nothing's changed since your last save.");
+});
+
+refreshVersionSelect();
 
 styleMarginInput.addEventListener("input", () => {
   stylePrefs.marginIn = Number(styleMarginInput.value);
@@ -460,7 +473,6 @@ function render(): void {
   renderLineNumbers(null);
   updateErrorLineHighlight();
   saveResumeText(editor.value);
-  checkpoint(editor.value);
   preview.className = `template-${currentTemplateId}`;
   preview.innerHTML = getTemplate(currentTemplateId).render(result.data);
   applyStylePrefs(previewPane, stylePrefs);
