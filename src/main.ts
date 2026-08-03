@@ -23,6 +23,8 @@ import {
 import { renderFormEditor } from "./lib/formEditor";
 import { htmlToMarkup } from "./lib/inlineMarkup";
 import { setAtPath } from "./lib/jsonPath";
+import { checkpoint, loadHistory, type HistoryEntry } from "./lib/history";
+import { diffLines } from "./lib/diffLines";
 import sampleResume from "./data/sample-resume.json";
 
 const editor = document.getElementById("json-editor") as HTMLTextAreaElement;
@@ -55,6 +57,13 @@ const templateSelect = document.getElementById("template-select") as HTMLSelectE
 const customizeBtn = document.getElementById("customize-btn") as HTMLButtonElement;
 const styleDialog = document.getElementById("style-dialog") as HTMLDialogElement;
 const styleDialogHeader = document.getElementById("style-dialog-header") as HTMLDivElement;
+
+const historyBtn = document.getElementById("history-btn") as HTMLButtonElement;
+const historyDialog = document.getElementById("history-dialog") as HTMLDialogElement;
+const historyDialogHeader = document.getElementById("history-dialog-header") as HTMLDivElement;
+const historySelect = document.getElementById("history-select") as HTMLSelectElement;
+const historyDiff = document.getElementById("history-diff") as HTMLDivElement;
+const historyRestoreBtn = document.getElementById("history-restore-btn") as HTMLButtonElement;
 const styleResetBtn = document.getElementById("style-reset-btn") as HTMLButtonElement;
 const styleAutofitBtn = document.getElementById("style-autofit-btn") as HTMLButtonElement;
 const styleMarginInput = document.getElementById("style-margin") as HTMLInputElement;
@@ -135,32 +144,91 @@ customizeBtn.addEventListener("click", () => {
 
 // .showModal() closes on Escape natively; .show() doesn't, so wire it up manually.
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && styleDialog.open) styleDialog.close();
+  if (e.key !== "Escape") return;
+  if (styleDialog.open) styleDialog.close();
+  if (historyDialog.open) historyDialog.close();
 });
 
-let dragOffsetX = 0;
-let dragOffsetY = 0;
+/** Makes a non-modal `.show()` dialog draggable by its header — shared by every floating panel. */
+function makeDialogDraggable(dialog: HTMLDialogElement, header: HTMLElement): void {
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
 
-function onDialogDragMove(e: PointerEvent): void {
-  const x = Math.min(Math.max(e.clientX - dragOffsetX, 0), window.innerWidth - styleDialog.offsetWidth);
-  const y = Math.min(Math.max(e.clientY - dragOffsetY, 0), window.innerHeight - styleDialog.offsetHeight);
-  styleDialog.style.left = `${x}px`;
-  styleDialog.style.top = `${y}px`;
+  function onDragMove(e: PointerEvent): void {
+    const x = Math.min(Math.max(e.clientX - dragOffsetX, 0), window.innerWidth - dialog.offsetWidth);
+    const y = Math.min(Math.max(e.clientY - dragOffsetY, 0), window.innerHeight - dialog.offsetHeight);
+    dialog.style.left = `${x}px`;
+    dialog.style.top = `${y}px`;
+  }
+
+  function onDragEnd(): void {
+    header.classList.remove("is-dragging");
+    window.removeEventListener("pointermove", onDragMove);
+    window.removeEventListener("pointerup", onDragEnd);
+  }
+
+  header.addEventListener("pointerdown", (e) => {
+    const rect = dialog.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+    header.classList.add("is-dragging");
+    window.addEventListener("pointermove", onDragMove);
+    window.addEventListener("pointerup", onDragEnd);
+  });
 }
 
-function onDialogDragEnd(): void {
-  styleDialogHeader.classList.remove("is-dragging");
-  window.removeEventListener("pointermove", onDialogDragMove);
-  window.removeEventListener("pointerup", onDialogDragEnd);
+makeDialogDraggable(styleDialog, styleDialogHeader);
+makeDialogDraggable(historyDialog, historyDialogHeader);
+
+function formatHistoryLabel(entry: HistoryEntry): string {
+  return new Date(entry.savedAt).toLocaleString();
 }
 
-styleDialogHeader.addEventListener("pointerdown", (e) => {
-  const rect = styleDialog.getBoundingClientRect();
-  dragOffsetX = e.clientX - rect.left;
-  dragOffsetY = e.clientY - rect.top;
-  styleDialogHeader.classList.add("is-dragging");
-  window.addEventListener("pointermove", onDialogDragMove);
-  window.addEventListener("pointerup", onDialogDragEnd);
+/** Renders a diff of the selected past version against the current editor content. */
+function renderHistoryDiff(): void {
+  const history = loadHistory();
+  if (history.length === 0) {
+    historyDiff.textContent = "No saved versions yet.";
+    historyRestoreBtn.disabled = true;
+    return;
+  }
+  const index = Number(historySelect.value);
+  const entry = history[index];
+  historyRestoreBtn.disabled = !entry;
+  historyDiff.innerHTML = "";
+  if (!entry) return;
+
+  for (const op of diffLines(entry.text, editor.value)) {
+    const lineEl = document.createElement("div");
+    lineEl.className = `diff-line diff-${op.type}`;
+    const prefix = op.type === "add" ? "+ " : op.type === "remove" ? "- " : "  ";
+    lineEl.textContent = prefix + op.line;
+    historyDiff.appendChild(lineEl);
+  }
+}
+
+historyBtn.addEventListener("click", () => {
+  const history = loadHistory();
+  const options: string[] = [];
+  // Newest first — indices are into the underlying (oldest-first) array, so diff/restore can
+  // look the entry up directly regardless of display order.
+  for (let i = history.length - 1; i >= 0; i--) {
+    options.push(`<option value="${i}">${escapeHtml(formatHistoryLabel(history[i]))}</option>`);
+  }
+  historySelect.innerHTML = options.join("");
+  renderHistoryDiff();
+  historyDialog.show();
+});
+
+historySelect.addEventListener("change", renderHistoryDiff);
+
+historyRestoreBtn.addEventListener("click", () => {
+  const history = loadHistory();
+  const entry = history[Number(historySelect.value)];
+  if (!entry) return;
+  editor.value = entry.text;
+  render();
+  historyDialog.close();
 });
 
 styleMarginInput.addEventListener("input", () => {
@@ -392,6 +460,7 @@ function render(): void {
   renderLineNumbers(null);
   updateErrorLineHighlight();
   saveResumeText(editor.value);
+  checkpoint(editor.value);
   preview.className = `template-${currentTemplateId}`;
   preview.innerHTML = getTemplate(currentTemplateId).render(result.data);
   applyStylePrefs(previewPane, stylePrefs);
