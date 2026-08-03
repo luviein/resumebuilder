@@ -59,20 +59,32 @@ Everything after step 1 autosaves to your browser's `localStorage` as you go —
 
 ### Available scripts
 
-| Command           | What it does                                      |
-| ------------------ | -------------------------------------------------- |
-| `npm run dev`       | Start the Vite dev server with hot reload           |
-| `npm run build`     | Type-check and build the production bundle to `dist/` |
-| `npm run preview`   | Serve the production build locally, for testing offline/PWA behavior |
-| `npm run test`      | Run the Vitest unit test suite                      |
-| `npm run test:e2e`  | Run the Playwright end-to-end suite (builds and serves the production bundle first) |
+| Command                | What it does                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| `npm run dev`          | Start the Vite dev server with hot reload                                           |
+| `npm run build`        | Type-check and build the production bundle to `dist/`                               |
+| `npm run preview`      | Serve the production build locally, for testing offline/PWA behavior                |
+| `npm run test`         | Run the Vitest unit test suite                                                      |
+| `npm run test:e2e`     | Run the Playwright end-to-end suite (builds and serves the production bundle first) |
+| `npm run lint`         | Lint with ESLint                                                                    |
+| `npm run format`       | Format the codebase with Prettier                                                   |
+| `npm run format:check` | Check formatting without writing changes (what CI runs)                             |
 
 ## Project structure
 
 ```
 index.html               # App shell: topbar, editor tabs, preview, customize dialog
 src/
-  main.ts                # Wires everything together — the only file with DOM event logic
+  main.ts                # Slim entry point: wires up each ui/ module and starts the app
+  ui/
+    editorCore.ts          # JSON textarea, line numbers, error highlighting, the render() pipeline
+    editorTabs.ts           # Source/Form and mobile edit/preview tab switching
+    customizeDialog.ts       # Customize dialog: style controls, reset, auto-fit
+    historyDialog.ts          # Version dropdown, save, comparison dialog, restore
+    formatToolbar.ts           # Floating Bold/Italic/Reset toolbar for the live preview
+    importExport.ts             # Import Resume, Download JSON, Export to PDF
+    appState.ts                  # Shared mutable state (style prefs, current template id)
+    dialogUtils.ts                # Shared dialog drag + Escape-to-close helpers
   types/resume.ts         # ResumeData shape: basics + an extensible sections[] array
   data/sample-resume.json # Default starter content
   lib/
@@ -95,6 +107,7 @@ src/
     minimal/                 # Single-column, ATS-safe template
     modern/                   # A second, visually distinct template
 tests/                    # Vitest unit tests, mirroring src/lib
+e2e/                      # Playwright end-to-end tests
 ```
 
 ## How PDF/DOCX import works
@@ -105,7 +118,7 @@ Text is extracted entirely client-side, then a heuristic engine looks for sectio
 
 Pushing to `main` automatically builds and deploys to GitHub Pages via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) — it installs dependencies, runs the test suite, builds with the correct base path for GitHub Pages' subdirectory hosting, then force-pushes the built output to a `gh-pages` branch (GitHub Pages is configured to serve from that branch). `main` only ever holds source — the build output is never committed there. No manual build step required, and `gh-pages`'s history doubles as a rollback point for every previously deployed build.
 
-`main` is protected: changes go through a pull request, and [`.github/workflows/ci.yml`](.github/workflows/ci.yml) must pass (tests + a full build) before it can be merged.
+`main` is protected: changes go through a pull request, and [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — lint, format check, unit tests, a full build, and the E2E suite — must pass before it can be merged.
 
 ## License
 

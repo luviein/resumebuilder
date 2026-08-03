@@ -15,14 +15,31 @@
           <select id="version-select" class="version-select" aria-label="Saved versions">
             <option value="" selected disabled hidden>Versions</option>
           </select>
-          <input id="version-name-input" class="version-name-input" type="text" placeholder="Name (optional)" aria-label="Name for the version being saved" />
+          <input
+            id="version-name-input"
+            class="version-name-input"
+            type="text"
+            placeholder="Name (optional)"
+            aria-label="Name for the version being saved"
+          />
           <button id="save-version-btn" type="button" title="Save the current resume as a new version">Save</button>
         </div>
         <div class="topbar-controls">
           <select id="template-select" aria-label="Template"></select>
           <button id="customize-btn" type="button">Customize</button>
-          <button id="load-json-btn" type="button" title="Import a PDF, DOCX, or JSON resume. PDF/DOCX are auto-parsed and may need review — JSON loads exactly as-is.">Import Resume</button>
-          <input id="load-json-input" type="file" accept=".json,application/json,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
+          <button
+            id="load-json-btn"
+            type="button"
+            title="Import a PDF, DOCX, or JSON resume. PDF/DOCX are auto-parsed and may need review — JSON loads exactly as-is."
+          >
+            Import Resume
+          </button>
+          <input
+            id="load-json-input"
+            type="file"
+            accept=".json,application/json,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            hidden
+          />
           <button id="download-json-btn" type="button">Download JSON</button>
           <button id="export-pdf-btn" type="button" class="primary">Export to PDF</button>
         </div>
@@ -116,7 +133,13 @@
 
           <div class="style-dialog-actions">
             <button id="style-reset-btn" type="button">Reset to defaults</button>
-            <button id="style-autofit-btn" type="button" title="Shrinks spacing, line height, and font size until the resume fits one page">Auto-fit to page</button>
+            <button
+              id="style-autofit-btn"
+              type="button"
+              title="Shrinks spacing, line height, and font size until the resume fits one page"
+            >
+              Auto-fit to page
+            </button>
             <button type="submit" class="primary">Done</button>
           </div>
         </form>

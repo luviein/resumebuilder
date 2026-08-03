@@ -63,65 +63,166 @@ function buildBasicsFieldset(data: ResumeData, notify: Notify, rebuild: Rebuild)
   fs.appendChild(legend);
 
   const { basics } = data;
-  fs.appendChild(smallInputEl("Name", basics.name, (v) => { basics.name = v; notify(); }));
-  fs.appendChild(smallInputEl("Label", basics.label ?? "", (v) => { basics.label = v || undefined; notify(); }));
-  fs.appendChild(smallInputEl("Email", basics.email ?? "", (v) => { basics.email = v || undefined; notify(); }));
-  fs.appendChild(smallInputEl("Phone", basics.phone ?? "", (v) => { basics.phone = v || undefined; notify(); }));
-  fs.appendChild(smallInputEl("URL", basics.url ?? "", (v) => { basics.url = v || undefined; notify(); }));
-  fs.appendChild(labeledTextarea("Summary", basics.summary ?? "", (v) => { basics.summary = v || undefined; notify(); }, 3));
+  fs.appendChild(
+    smallInputEl("Name", basics.name, (v) => {
+      basics.name = v;
+      notify();
+    }),
+  );
+  fs.appendChild(
+    smallInputEl("Label", basics.label ?? "", (v) => {
+      basics.label = v || undefined;
+      notify();
+    }),
+  );
+  fs.appendChild(
+    smallInputEl("Email", basics.email ?? "", (v) => {
+      basics.email = v || undefined;
+      notify();
+    }),
+  );
+  fs.appendChild(
+    smallInputEl("Phone", basics.phone ?? "", (v) => {
+      basics.phone = v || undefined;
+      notify();
+    }),
+  );
+  fs.appendChild(
+    smallInputEl("URL", basics.url ?? "", (v) => {
+      basics.url = v || undefined;
+      notify();
+    }),
+  );
+  fs.appendChild(
+    labeledTextarea(
+      "Summary",
+      basics.summary ?? "",
+      (v) => {
+        basics.summary = v || undefined;
+        notify();
+      },
+      3,
+    ),
+  );
 
-  fs.appendChild(smallInputEl("City", basics.location?.city ?? "", (v) => {
-    basics.location = { ...basics.location, city: v || undefined };
-    notify();
-  }));
-  fs.appendChild(smallInputEl("Region", basics.location?.region ?? "", (v) => {
-    basics.location = { ...basics.location, region: v || undefined };
-    notify();
-  }));
-  fs.appendChild(smallInputEl("Country code", basics.location?.countryCode ?? "", (v) => {
-    basics.location = { ...basics.location, countryCode: v || undefined };
-    notify();
-  }));
+  fs.appendChild(
+    smallInputEl("City", basics.location?.city ?? "", (v) => {
+      basics.location = { ...basics.location, city: v || undefined };
+      notify();
+    }),
+  );
+  fs.appendChild(
+    smallInputEl("Region", basics.location?.region ?? "", (v) => {
+      basics.location = { ...basics.location, region: v || undefined };
+      notify();
+    }),
+  );
+  fs.appendChild(
+    smallInputEl("Country code", basics.location?.countryCode ?? "", (v) => {
+      basics.location = { ...basics.location, countryCode: v || undefined };
+      notify();
+    }),
+  );
 
   const profilesWrap = document.createElement("div");
   profilesWrap.className = "form-items";
   (basics.profiles ?? []).forEach((profile, i) => {
     const row = document.createElement("div");
     row.className = "form-item form-item-inline";
-    row.appendChild(smallInputEl("Network name", profile.network ?? "", (v) => { profile.network = v || undefined; notify(); }));
-    row.appendChild(smallInputEl("URL", profile.url ?? "", (v) => { profile.url = v || undefined; notify(); }));
-    row.appendChild(actionButton("Remove link", () => {
-      basics.profiles!.splice(i, 1);
-      notify();
-      rebuild();
-    }));
+    row.appendChild(
+      smallInputEl("Network name", profile.network ?? "", (v) => {
+        profile.network = v || undefined;
+        notify();
+      }),
+    );
+    row.appendChild(
+      smallInputEl("URL", profile.url ?? "", (v) => {
+        profile.url = v || undefined;
+        notify();
+      }),
+    );
+    row.appendChild(
+      actionButton("Remove link", () => {
+        basics.profiles!.splice(i, 1);
+        notify();
+        rebuild();
+      }),
+    );
     profilesWrap.appendChild(row);
   });
   fs.appendChild(profilesWrap);
-  fs.appendChild(actionButton("Add link", () => {
-    basics.profiles = [...(basics.profiles ?? []), { network: "", url: "" }];
-    notify();
-    rebuild();
-  }));
+  fs.appendChild(
+    actionButton("Add link", () => {
+      basics.profiles = [...(basics.profiles ?? []), { network: "", url: "" }];
+      notify();
+      rebuild();
+    }),
+  );
 
   return fs;
 }
 
-function buildEntryItemForm(item: ResumeEntryItem, notify: Notify, onRemove: () => void, onMoveUp: () => void, onMoveDown: () => void): HTMLElement {
+function buildEntryItemForm(
+  item: ResumeEntryItem,
+  notify: Notify,
+  onRemove: () => void,
+  onMoveUp: () => void,
+  onMoveDown: () => void,
+): HTMLElement {
   const wrap = document.createElement("div");
   wrap.className = "form-item";
 
-  wrap.appendChild(smallInputEl("Heading (company, institution, project)", item.heading, (v) => { item.heading = v; notify(); }));
-  wrap.appendChild(smallInputEl("Subheading (position, degree)", item.subheading ?? "", (v) => { item.subheading = v || undefined; notify(); }));
-  wrap.appendChild(smallInputEl("URL", item.url ?? "", (v) => { item.url = v || undefined; notify(); }));
-  wrap.appendChild(smallInputEl("Start date (e.g. 2024-01)", item.startDate ?? "", (v) => { item.startDate = v || undefined; notify(); }));
-  wrap.appendChild(smallInputEl("End date (blank = Present)", item.endDate ?? "", (v) => { item.endDate = v; notify(); }));
-  wrap.appendChild(labeledTextarea("Summary", item.summary ?? "", (v) => { item.summary = v || undefined; notify(); }));
-  wrap.appendChild(labeledTextarea("Highlights (one per line)", (item.highlights ?? []).join("\n"), (v) => {
-    const lines = v.split("\n").map((s) => s.trim()).filter(Boolean);
-    item.highlights = lines.length ? lines : undefined;
-    notify();
-  }, 4));
+  wrap.appendChild(
+    smallInputEl("Heading (company, institution, project)", item.heading, (v) => {
+      item.heading = v;
+      notify();
+    }),
+  );
+  wrap.appendChild(
+    smallInputEl("Subheading (position, degree)", item.subheading ?? "", (v) => {
+      item.subheading = v || undefined;
+      notify();
+    }),
+  );
+  wrap.appendChild(
+    smallInputEl("URL", item.url ?? "", (v) => {
+      item.url = v || undefined;
+      notify();
+    }),
+  );
+  wrap.appendChild(
+    smallInputEl("Start date (e.g. 2024-01)", item.startDate ?? "", (v) => {
+      item.startDate = v || undefined;
+      notify();
+    }),
+  );
+  wrap.appendChild(
+    smallInputEl("End date (blank = Present)", item.endDate ?? "", (v) => {
+      item.endDate = v;
+      notify();
+    }),
+  );
+  wrap.appendChild(
+    labeledTextarea("Summary", item.summary ?? "", (v) => {
+      item.summary = v || undefined;
+      notify();
+    }),
+  );
+  wrap.appendChild(
+    labeledTextarea(
+      "Highlights (one per line)",
+      (item.highlights ?? []).join("\n"),
+      (v) => {
+        const lines = v
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        item.highlights = lines.length ? lines : undefined;
+        notify();
+      },
+      4,
+    ),
+  );
 
   const actions = document.createElement("div");
   actions.className = "form-item-actions";
@@ -136,13 +237,28 @@ function buildEntryItemForm(item: ResumeEntryItem, notify: Notify, onRemove: () 
 function buildSkillItemForm(item: ResumeSkillItem, notify: Notify, onRemove: () => void): HTMLElement {
   const wrap = document.createElement("div");
   wrap.className = "form-item";
-  wrap.appendChild(smallInputEl("Group name", item.name, (v) => { item.name = v; notify(); }));
-  wrap.appendChild(smallInputEl("Level", item.level ?? "", (v) => { item.level = v || undefined; notify(); }));
-  wrap.appendChild(smallInputEl("Keywords (comma-separated)", (item.keywords ?? []).join(", "), (v) => {
-    const keywords = v.split(",").map((s) => s.trim()).filter(Boolean);
-    item.keywords = keywords.length ? keywords : undefined;
-    notify();
-  }));
+  wrap.appendChild(
+    smallInputEl("Group name", item.name, (v) => {
+      item.name = v;
+      notify();
+    }),
+  );
+  wrap.appendChild(
+    smallInputEl("Level", item.level ?? "", (v) => {
+      item.level = v || undefined;
+      notify();
+    }),
+  );
+  wrap.appendChild(
+    smallInputEl("Keywords (comma-separated)", (item.keywords ?? []).join(", "), (v) => {
+      const keywords = v
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      item.keywords = keywords.length ? keywords : undefined;
+      notify();
+    }),
+  );
 
   const actions = document.createElement("div");
   actions.className = "form-item-actions";
@@ -169,41 +285,49 @@ function buildSectionFieldset(
   legend.textContent = `${section.title || "Untitled section"} (${section.type})`;
   fs.appendChild(legend);
 
-  fs.appendChild(smallInputEl("Section title", section.title, (v) => {
-    section.title = v;
-    legend.textContent = `${v || "Untitled section"} (${section.type})`;
-    notify();
-  }));
+  fs.appendChild(
+    smallInputEl("Section title", section.title, (v) => {
+      section.title = v;
+      legend.textContent = `${v || "Untitled section"} (${section.type})`;
+      notify();
+    }),
+  );
 
   const sectionActions = document.createElement("div");
   sectionActions.className = "form-item-actions";
-  sectionActions.appendChild(actionButton("Move section up", () => {
-    if (index === 0) {
-      showMessage(`"${section.title || "This section"}" is already at the top.`);
-      return;
-    }
-    swap(data.sections, index - 1, index);
-    const newIndex = index - 1;
-    notify();
-    rebuild();
-    highlightAndScrollTo(container.querySelector(`[data-section-index="${newIndex}"]`));
-  }));
-  sectionActions.appendChild(actionButton("Move section down", () => {
-    if (index === data.sections.length - 1) {
-      showMessage(`"${section.title || "This section"}" is already at the bottom.`);
-      return;
-    }
-    swap(data.sections, index, index + 1);
-    const newIndex = index + 1;
-    notify();
-    rebuild();
-    highlightAndScrollTo(container.querySelector(`[data-section-index="${newIndex}"]`));
-  }));
-  sectionActions.appendChild(actionButton("Remove section", () => {
-    data.sections.splice(index, 1);
-    notify();
-    rebuild();
-  }));
+  sectionActions.appendChild(
+    actionButton("Move section up", () => {
+      if (index === 0) {
+        showMessage(`"${section.title || "This section"}" is already at the top.`);
+        return;
+      }
+      swap(data.sections, index - 1, index);
+      const newIndex = index - 1;
+      notify();
+      rebuild();
+      highlightAndScrollTo(container.querySelector(`[data-section-index="${newIndex}"]`));
+    }),
+  );
+  sectionActions.appendChild(
+    actionButton("Move section down", () => {
+      if (index === data.sections.length - 1) {
+        showMessage(`"${section.title || "This section"}" is already at the bottom.`);
+        return;
+      }
+      swap(data.sections, index, index + 1);
+      const newIndex = index + 1;
+      notify();
+      rebuild();
+      highlightAndScrollTo(container.querySelector(`[data-section-index="${newIndex}"]`));
+    }),
+  );
+  sectionActions.appendChild(
+    actionButton("Remove section", () => {
+      data.sections.splice(index, 1);
+      notify();
+      rebuild();
+    }),
+  );
   fs.appendChild(sectionActions);
 
   const itemsWrap = document.createElement("div");
@@ -214,7 +338,11 @@ function buildSectionFieldset(
       const entryEl = buildEntryItemForm(
         item,
         notify,
-        () => { section.items.splice(i, 1); notify(); rebuild(); },
+        () => {
+          section.items.splice(i, 1);
+          notify();
+          rebuild();
+        },
         () => {
           if (i === 0) {
             showMessage(`"${item.heading || "This entry"}" is already at the top of "${section.title}".`);
@@ -224,7 +352,9 @@ function buildSectionFieldset(
           const newIndex = i - 1;
           notify();
           rebuild();
-          highlightAndScrollTo(container.querySelector(`[data-section-index="${index}"] [data-entry-index="${newIndex}"]`));
+          highlightAndScrollTo(
+            container.querySelector(`[data-section-index="${index}"] [data-entry-index="${newIndex}"]`),
+          );
         },
         () => {
           if (i === section.items.length - 1) {
@@ -235,30 +365,52 @@ function buildSectionFieldset(
           const newIndex = i + 1;
           notify();
           rebuild();
-          highlightAndScrollTo(container.querySelector(`[data-section-index="${index}"] [data-entry-index="${newIndex}"]`));
+          highlightAndScrollTo(
+            container.querySelector(`[data-section-index="${index}"] [data-entry-index="${newIndex}"]`),
+          );
         },
       );
       entryEl.dataset.entryIndex = String(i);
       itemsWrap.appendChild(entryEl);
     });
     fs.appendChild(itemsWrap);
-    fs.appendChild(actionButton("Add entry", () => {
-      section.items.push({ heading: "New entry" });
-      notify();
-      rebuild();
-    }));
+    fs.appendChild(
+      actionButton("Add entry", () => {
+        section.items.push({ heading: "New entry" });
+        notify();
+        rebuild();
+      }),
+    );
   } else if (section.type === "skills") {
     section.items.forEach((item, i) => {
-      itemsWrap.appendChild(buildSkillItemForm(item, notify, () => { section.items.splice(i, 1); notify(); rebuild(); }));
+      itemsWrap.appendChild(
+        buildSkillItemForm(item, notify, () => {
+          section.items.splice(i, 1);
+          notify();
+          rebuild();
+        }),
+      );
     });
     fs.appendChild(itemsWrap);
-    fs.appendChild(actionButton("Add skill group", () => {
-      section.items.push({ name: "New group", keywords: [] });
-      notify();
-      rebuild();
-    }));
+    fs.appendChild(
+      actionButton("Add skill group", () => {
+        section.items.push({ name: "New group", keywords: [] });
+        notify();
+        rebuild();
+      }),
+    );
   } else {
-    fs.appendChild(labeledTextarea("Content", section.items, (v) => { section.items = v; notify(); }, 4));
+    fs.appendChild(
+      labeledTextarea(
+        "Content",
+        section.items,
+        (v) => {
+          section.items = v;
+          notify();
+        },
+        4,
+      ),
+    );
   }
 
   return fs;
@@ -278,17 +430,23 @@ function buildAddSectionControl(data: ResumeData, notify: Notify, rebuild: Rebui
     '<option value="skills">Skills</option>' +
     '<option value="text">Text</option>';
 
-  wrap.append(titleInput, typeSelect, actionButton("Add section", () => {
-    const title = titleInput.value.trim() || "New section";
-    const type = typeSelect.value as ResumeSection["type"];
-    const newSection: ResumeSection =
-      type === "skills" ? { title, type, items: [] } :
-      type === "text" ? { title, type, items: "" } :
-      { title, type: "entries", items: [] };
-    data.sections.push(newSection);
-    notify();
-    rebuild();
-  }));
+  wrap.append(
+    titleInput,
+    typeSelect,
+    actionButton("Add section", () => {
+      const title = titleInput.value.trim() || "New section";
+      const type = typeSelect.value as ResumeSection["type"];
+      const newSection: ResumeSection =
+        type === "skills"
+          ? { title, type, items: [] }
+          : type === "text"
+            ? { title, type, items: "" }
+            : { title, type: "entries", items: [] };
+      data.sections.push(newSection);
+      notify();
+      rebuild();
+    }),
+  );
 
   return wrap;
 }

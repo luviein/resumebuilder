@@ -57,9 +57,7 @@ describe("parseResumeText", () => {
     const networks = result.basics.profiles?.map((p) => p.network);
     expect(networks).toContain("LinkedIn");
     expect(networks).toContain("GitHub");
-    expect(result.basics.profiles?.find((p) => p.network === "GitHub")?.url).toBe(
-      "https://github.com/jrivera",
-    );
+    expect(result.basics.profiles?.find((p) => p.network === "GitHub")?.url).toBe("https://github.com/jrivera");
   });
 
   it("captures the summary section", () => {
@@ -274,13 +272,7 @@ describe("parseResumeText edge cases", () => {
   it("recognizes an unrecognized ALL-CAPS heading (e.g. Certifications) as its own text section", () => {
     // No keyword vocabulary for "CERTIFICATIONS" exists — it should still become a real section
     // instead of being silently absorbed into whatever section came before it.
-    const text = [
-      "Sam Rivera",
-      "SKILLS",
-      "Python, SQL",
-      "LANGUAGES",
-      "English, Spanish, French",
-    ].join("\n");
+    const text = ["Sam Rivera", "SKILLS", "Python, SQL", "LANGUAGES", "English, Spanish, French"].join("\n");
 
     const result = parseResumeText(text);
     const languages = result.sections.find((s) => s.title === "Languages");
@@ -291,12 +283,7 @@ describe("parseResumeText edge cases", () => {
   });
 
   it("infers an 'entries' type for an unrecognized heading whose content looks like dated entries", () => {
-    const text = [
-      "Sam Rivera",
-      "CERTIFICATIONS",
-      "AWS Certified Solutions Architect",
-      "Jan 2023 - Present",
-    ].join("\n");
+    const text = ["Sam Rivera", "CERTIFICATIONS", "AWS Certified Solutions Architect", "Jan 2023 - Present"].join("\n");
 
     const result = parseResumeText(text);
     const certifications = entriesSection(result, "Certifications");
