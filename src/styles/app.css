@@ -72,6 +72,12 @@ select {
   cursor: pointer;
 }
 
+/* The native dropdown arrow renders inside the right padding, crowding it — extra room there
+   (beyond the shared button/select padding above) keeps the text from looking left-shifted. */
+select {
+  padding-right: 2rem;
+}
+
 button.primary {
   background: var(--accent);
   color: var(--accent-text);
@@ -258,6 +264,10 @@ button:disabled {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
+}
+
+.form-add-section select {
+  padding-right: 1.75rem;
 }
 
 .form-field-multiline textarea {
